@@ -1,0 +1,317 @@
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh; 
+  padding-bottom: 100px;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  position: relative;
+  background: linear-gradient(
+      -45deg,
+      rgba(199, 168, 146, 0.39) 0%,
+      rgba(241, 237, 233, 0.4) 100%
+    ),
+    #e2e1dd;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  z-index: 1000;
+}
+
+.nav-title {
+  color: rgba(74, 52, 41, 0.9);
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s;
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-icon {
+  font-size: 1.4em;
+}
+
+.canvas-container {
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-top: -80px;
+
+  /* 定義基礎單位，基於咖啡杯尺寸 */
+  --cup-size: min(80vw, 560px);
+  --border-width: calc(var(--cup-size) * 0.043); /* 約為24px，當尺寸為560px時 */
+}
+
+#myCanvas {
+  width: var(--cup-size);
+  height: var(--cup-size);
+  border-radius: 50%;
+  margin: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* 提取共享的基本樣式 - 主要是定位和通用屬性 */
+.border-base {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* 外層容器 */
+.outer-border-container {
+  width: calc(var(--cup-size) + var(--border-width) * 1.6);
+  height: calc(var(--cup-size) + var(--border-width) * 1.6);
+  border-radius: 50%;
+  z-index: 3;
+  filter: blur(2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 外邊緣 - 從左上到右下是白色到灰色的漸變 */
+.outer-border {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgb(255, 255, 255), rgb(228, 226, 225));
+
+  /* 创建遮罩效果，使中心区域透明 */
+  -webkit-mask: radial-gradient(
+    circle at center,
+    transparent calc(var(--cup-size) / 2),
+    black calc(var(--cup-size) / 2)
+  );
+  mask: radial-gradient(
+    circle at center,
+    transparent calc(var(--cup-size) / 2 + var(--border-width) * 0.2),
+    black calc(var(--cup-size) / 2 + var(--border-width) * 0.2)
+  );
+}
+
+/* 邊緣本體 - 圓環狀、較粗、顏色為米色 */
+.main-border {
+  width: calc(var(--cup-size) - var(--border-width) * 0.5);
+  height: calc(var(--cup-size) - var(--border-width) * 0.5);
+  border: calc(var(--border-width) * 1) solid #f3f3f3;
+  z-index: 2;
+}
+
+/* 內邊緣 - 從左上到右下是灰色到白色的漸變 */
+.inner-border {
+  width: calc(var(--cup-size) - var(--border-width) * 0.6);
+  height: calc(var(--cup-size) - var(--border-width) * 0.6);
+  border: calc(var(--border-width) * 0.2) solid #e4e2e1;
+  filter: blur(0.8px);
+  z-index: 4;
+}
+
+.controls {
+  position: fixed;
+  width: 300px;
+  max-height: calc(100vh - 68px);
+  overflow-y: auto;
+  background: rgba(240, 240, 240, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  padding-bottom: 64px;
+  font-size: 0.9em;
+  transition: transform 0.3s ease;
+  top: 0;
+  right: 20px;
+  margin-top: 58px;
+  z-index: 99;
+}
+
+.controls.hidden {
+  transform: translateX(120%);
+}
+
+/* 手機版面配置 */
+@media (max-width: 768px) {
+  .controls {
+    width: 85%;
+    max-width: 300px;
+    right: 0;
+    border-radius: 8px 0 0 8px;
+    margin-top: 58px;
+  }
+
+  .controls.hidden {
+    transform: translateX(100%);
+  }
+
+  .control-group {
+    margin: 6px 0;
+    padding: 6px;
+  }
+
+  input[type="range"] {
+    width: 80px;
+  }
+
+  label {
+    width: 110px;
+    font-size: 0.8em;
+  }
+}
+
+.control-group {
+  margin: 8px 0;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+}
+
+.control-group h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 0.95em;
+}
+
+.control-group > div {
+  margin: 4px 0;
+}
+
+label {
+  display: inline-block;
+  width: 120px;
+  color: #555;
+  font-size: 0.85em;
+}
+
+input[type="range"] {
+  width: 100px;
+  vertical-align: middle;
+}
+
+.value-display {
+  display: inline-block;
+  width: 40px;
+  margin-left: 8px;
+  color: #666;
+  font-size: 0.85em;
+}
+
+#restartButton {
+  padding: 6px 12px;
+  background-color: rgba(240, 237, 234, 0.9);
+  color: rgb(51, 20, 7);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 90%;
+  height: 48px;
+  max-width: 450px;
+
+  /* 新增定位樣式 */
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 40px; /* 距離底部40px */
+  z-index: 50; /* 確保按鈕在適當的層級 */
+  /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+}
+
+/* 添加模式選擇器容器的樣式 */
+.mode-selector-container {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 120px; /* 比重新開始按鈕高一些 */
+  width: 90%;
+  max-width: 450px;
+  z-index: 50;
+}
+
+/* 更新模式選擇器樣式，使其適應新位置 */
+.mode-selector {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+  justify-content: space-between;
+}
+
+.mode-btn {
+  padding: 8px 12px;
+  border: 2px solid rgba(126, 53, 19, 0.8);
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: rgba(126, 53, 19, 0.8);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.85em;
+  flex: 1;
+  max-width: 140px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 手機適配 */
+@media (max-width: 768px) {
+  .mode-btn {
+    font-size: 0.75em;
+    padding: 8px 6px;
+  }
+
+  .mode-selector-container {
+    bottom: 115px;
+  }
+}
+.mode-btn:hover {
+  background-color: rgba(240, 240, 240, 0.8);
+}
+
+.mode-btn.active {
+  background-color: rgba(104, 46, 17, 0.8);
+  color: white;
+}
+
+/* 捲軸樣式 */
+.controls::-webkit-scrollbar {
+  width: 6px;
+}
+
+.controls::-webkit-scrollbar-track {
+  background: rgba(240, 240, 240, 0.5);
+}
+
+.controls::-webkit-scrollbar-thumb {
+  background: rgba(74, 52, 41, 0.5);
+  border-radius: 3px;
+}
+
+.controls::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 52, 41, 0.7);
+}
