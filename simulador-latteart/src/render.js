@@ -6,21 +6,15 @@ export class FluidRenderer {
     this.ctx = canvas.getContext("2d", { willReadFrequently: true });
     this.simHeight = simHeight;
     this.cScale = canvas.height / simHeight;
-    this.simWidth = Math.floor(canvas.width / this.cScale);
+    this.simWidth = canvas.width / this.cScale;
 
-    // 1. DEFINICIÓN DE COLORES EN HEX
-    this.colors = {
-      background: "#326621",  // Verde fondo
-      milk: "#FFFCF5",       // Blanco leche
-      cup: "#FF0000"         // Rojo brillante (para prueba)
-    };
-
-    // 2. CONVERSIÓN INICIAL A RGB
-    this.cupColor = this.hexToRgb(this.colors.cup);
-    console.log("Color de taza (RGB):", this.cupColor); // Verificación
+    // Definición de colores en HEX
+    this.backgroundColor = "#b49461"; // Marrón oscuro como fondo (RGB: 180, 148, 97)
+    this.milkColor = "#FFFCF5";      // Blanco cálido como leche (RGB: 255, 252, 245)
+    this.solidColor = "#1E64C8";     // Azul para sólidos (RGB: 30, 100, 200)
   }
 
-  // Conversión HEX a RGB [r,g,b]
+  // Método para convertir HEX a RGB
   hexToRgb(hex) {
     hex = hex.replace('#', '');
     return [
@@ -30,74 +24,109 @@ export class FluidRenderer {
     ];
   }
 
-  getFluidColor(density, isSolid) {
-    // 3. PRIORIDAD MÁXIMA A CELDAS SÓLIDAS
-    if (isSolid) {
-      console.log("Dibujando celda sólida"); // Debug
-      return [...this.cupColor, 255]; // [r,g,b,a]
-    }
-
-    density = Math.min(Math.max(density, 0.0), 1.0);
-    const bg = this.hexToRgb(this.colors.background);
-    const milk = this.hexToRgb(this.colors.milk);
+  // Método para mezclar colores HEX
+  mixHexColors(hex1, hex2, ratio) {
+    const rgb1 = this.hexToRgb(hex1);
+    const rgb2 = this.hexToRgb(hex2);
     
     return [
-      Math.floor(bg[0] * (1 - density) + milk[0] * density),
-      Math.floor(bg[1] * (1 - density) + milk[1] * density),
-      Math.floor(bg[2] * (1 - density) + milk[2] * density),
-      255
+      Math.floor(rgb1[0] * (1 - ratio) + rgb2[0] * ratio),
+      Math.floor(rgb1[1] * (1 - ratio) + rgb2[1] * ratio),
+      Math.floor(rgb1[2] * (1 - ratio) + rgb2[2] * ratio),
+      255 // Alpha fijo
     ];
   }
 
+  cX(x) {
+    return x * this.cScale;
+  }
+
+  cY(y) {
+    return this.canvas.height - y * this.cScale;
+  }
+
+  getFluidColor(density, isSolid = false) {
+    // Si es una celda sólida, se devuelve color azul
+    if (isSolid) {
+      return [...this.hexToRgb(this.solidColor), 255];
+    }
+
+    // Asegura que la densidad esté entre 0 y 1
+    density = Math.min(Math.max(density, 0.0), 1.0);
+
+    // Mezcla de color de fondo y color de leche (en HEX)
+    return this.mixHexColors(this.backgroundColor, this.milkColor, density);
+  }
+
   draw(fluid, options = {}) {
-    console.log("Iniciando dibujo..."); // Debug
+    const { showStreamlines = false } = options;
+
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const id = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    const n = fluid.numY;
+    const cellScale = 1.1;
     const h = fluid.h;
-    let solidCells = 0;
 
-    // 4. VERIFICACIÓN DE DATOS DE SIMULACIÓN
-    console.log("Dimensiones simulación:", fluid.numX, fluid.numY);
-    console.log("Muestra de celdas sólidas:", 
-      fluid.s.slice(0, 10), "..."); // Primeras 10 celdas
+    const id = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 
+    // Dibujo del fluido
     for (let i = 0; i < fluid.numX; i++) {
       for (let j = 0; j < fluid.numY; j++) {
-        const index = i * fluid.numY + j;
-        const isSolid = fluid.s[index] === 0.0;
-        
-        if (isSolid) {
-          solidCells++;
-          // 5. DIBUJADO SÓLIDO CON COLOR FIJO
-          const [r, g, b] = this.cupColor;
-          const x = Math.floor(this.cX(i * h));
-          const y = Math.floor(this.cY((j + 1) * h));
-          const size = Math.floor(this.cScale * h) + 1;
+        // Verifica si es una celda sólida
+        const isSolid = fluid.s[i * n + j] === 0.0;
 
-          for (let yi = y; yi > y - size && yi >= 0; yi--) {
-            let p = 4 * (yi * this.canvas.width + x);
-            for (let xi = 0; xi < size && x + xi < this.canvas.width; xi++) {
-              id.data[p++] = r;
-              id.data[p++] = g;
-              id.data[p++] = b;
-              id.data[p++] = 255;
-            }
+        // Obtiene la densidad de la leche
+        const density = fluid.densityField.getDensity(i, j, "milk");
+        const color = this.getFluidColor(density, isSolid);
+
+        const x = Math.floor(this.cX(i * h));
+        const y = Math.floor(this.cY((j + 1) * h));
+        const cx = Math.floor(this.cScale * cellScale * h) + 1;
+        const cy = Math.floor(this.cScale * cellScale * h) + 1;
+
+        for (let yi = y; yi < y + cy; yi++) {
+          let p = 4 * (yi * this.canvas.width + x);
+          for (let xi = 0; xi < cx; xi++) {
+            id.data[p++] = color[0];
+            id.data[p++] = color[1];
+            id.data[p++] = color[2];
+            id.data[p++] = color[3];
           }
         }
       }
     }
 
-    console.log(`Celdas sólidas dibujadas: ${solidCells}`);
     this.ctx.putImageData(id, 0, 0);
-
-    // 6. DIBUJADO ADICIONAL PARA VERIFICACIÓN
-    if (solidCells === 0) {
-      console.warn("¡No se detectaron celdas sólidas!");
-      this.ctx.fillStyle = this.colors.cup;
-      this.ctx.fillRect(10, 10, 50, 50); // Cuadrado rojo de prueba
+    if (showStreamlines) {
+      this.drawStreamlines(fluid);
     }
   }
 
-  // ... (otros métodos permanecen igual)
+  drawStreamlines(fluid) {
+    const numSegs = 30;
+    this.ctx.strokeStyle = "#4F04FF80"; // HEX con opacidad (equivalente a rgba(79, 4, 255, 0.5))
+    this.ctx.lineWidth = 1;
+
+    for (let i = 1; i < fluid.numX - 1; i += 3) {
+      for (let j = 1; j < fluid.numY - 1; j += 3) {
+        let x = (i + 0.5) * fluid.h;
+        let y = (j + 0.5) * fluid.h;
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.cX(x), this.cY(y));
+
+        for (let n = 0; n < numSegs; n++) {
+          const u = fluid.sampleField(x, y, U_FIELD);
+          const v = fluid.sampleField(x, y, V_FIELD);
+          x += u * 0.015;
+          y += v * 0.015;
+          if (x > fluid.numX * fluid.h || x < 0 || y > fluid.numY * fluid.h || y < 0) {
+            break;
+          }
+          this.ctx.lineTo(this.cX(x), this.cY(y));
+        }
+        this.ctx.stroke();
+      }
+    }
+  }
 }

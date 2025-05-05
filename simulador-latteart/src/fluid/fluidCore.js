@@ -1,42 +1,44 @@
-export const U_FIELD = 0;
-export const V_FIELD = 1;
-export const W_FIELD = 2;
+export const U_FIELD = 0;  // Campo de velocidad horizontal
+export const V_FIELD = 1;  // Campo de velocidad vertical
+export const W_FIELD = 2;  // Campo de velocidad en profundidad (nuevo)
 
 import { DensityField } from "./densityField.js";
 
 export class Fluid {
   constructor(density, numX, numY, h, viscosity) {
     this.density = density;
-    this.numX = numX + 2;
-    this.numY = numY + 2;
+    this.numX = numX + 2;  // Añade bordes
+    this.numY = numY + 2;  // Añade bordes
     this.numCells = this.numX * this.numY;
-    this.h = h;
+    this.h = h;  // Tamaño de la celda
     this.viscosity = viscosity;
-    this.velocityThreshold = 0.001;
+    this.velocityThreshold = 0.001;  // Umbral para considerar velocidad cero
 
-  // Campos de velocidad
-    this.u = new Float32Array(this.numCells);
-    this.v = new Float32Array(this.numCells);
-    this.w = new Float32Array(this.numCells); // Añade el campo de velocidad en la dirección Z
-    this.newU = new Float32Array(this.numCells);
+    // Campos de velocidad
+    this.u = new Float32Array(this.numCells);  // Velocidad horizontal
+    this.v = new Float32Array(this.numCells);  // Velocidad vertical
+    this.w = new Float32Array(this.numCells);  // Velocidad en profundidad (nuevo)
+    this.newU = new Float32Array(this.numCells);  // Buffer para nuevo estado
     this.newV = new Float32Array(this.numCells);
-    this.newW = new Float32Array(this.numCells); // Añade newW
-    this.p = new Float32Array(this.numCells);
-    this.s = new Float32Array(this.numCells);
+    this.newW = new Float32Array(this.numCells);
+    this.p = new Float32Array(this.numCells);  // Presión
+    this.s = new Float32Array(this.numCells);  // Estado (sólido/fluido)
 
-    // Crear el campo de densidad
+    // Campo de densidad para diferentes fluidos
     this.densityField = new DensityField(numX, numY);
   }
 
-  // Acceso al campo de densidad para compatibilidad hacia atrás
+  // Método de compatibilidad para acceder a densidad
   get m() {
     return this.densityField.m;
   }
 
+  // Aplica gravedad al fluido
   integrate(dt, gravity) {
     const n = this.numY;
     for (let i = 1; i < this.numX; i++) {
       for (let j = 1; j < this.numY - 1; j++) {
+        // Solo aplica gravedad a celdas fluidas
         if (this.s[i * n + j] != 0.0 && this.s[i * n + j - 1] != 0.0) {
           this.v[i * n + j] += gravity * dt;
         }
@@ -44,39 +46,40 @@ export class Fluid {
     }
   }
 
+  // Resuelve la incompresibilidad del fluido
   solveIncompressibility(numIters, dt, overRelaxation) {
     const n = this.numY;
-    const cp = (this.density * this.h) / dt; // Coeficiente de presión
+    const cp = (this.density * this.h) / dt;  // Coeficiente de presión
 
     for (let iter = 0; iter < numIters; iter++) {
       for (let i = 1; i < this.numX - 1; i++) {
         for (let j = 1; j < this.numY - 1; j++) {
-          if (this.s[i * n + j] == 0.0) continue; // Omitir celdas sólidas
+          if (this.s[i * n + j] == 0.0) continue;  // Salta celdas sólidas
 
+          // Verifica celdas vecinas
           const sx0 = this.s[(i - 1) * n + j];
           const sx1 = this.s[(i + 1) * n + j];
           const sy0 = this.s[i * n + j - 1];
           const sy1 = this.s[i * n + j + 1];
           const sum = sx0 + sx1 + sy0 + sy1;
-          if (sum == 0.0) continue; // Sin celdas de fluido adyacentes
+          if (sum == 0.0) continue;  // No hay celdas fluidas vecinas
 
-          // Calcular divergencia
+          // Calcula divergencia
           let div =
             this.u[(i + 1) * n + j] -
             this.u[i * n + j] +
             this.v[i * n + j + 1] -
             this.v[i * n + j];
 
-          // Considerar la contribución en dirección Z - esta es la modificación clave
-          // No hay una grilla real en Z, se usa el valor actual de w como una aproximación de ∂w/∂z
-          // Valores positivos de w indican fluido entrando desde arriba, lo que incrementa la divergencia
+          // Ajuste por velocidad en profundidad (simplificado)
           div -= this.w[i * n + j];
 
-          let p = -div / sum; // Calcular corrección de presión
+          // Calcula corrección de presión
+          let p = -div / sum;
           p *= overRelaxation;
-          this.p[i * n + j] += cp * p; // Actualizar campo de presión
+          this.p[i * n + j] += cp * p;
 
-          // Corregir campo de velocidad
+          // Ajusta velocidades
           this.u[i * n + j] -= sx0 * p;
           this.u[(i + 1) * n + j] += sx1 * p;
           this.v[i * n + j] -= sy0 * p;
@@ -86,9 +89,10 @@ export class Fluid {
     }
   }
 
+  // Extrapola velocidades a los bordes
   extrapolate() {
     const n = this.numY;
-    // Manejo de bordes horizontales
+    // Bordes horizontales
     for (let i = 0; i < this.numX; i++) {
       this.u[i * n + 0] = this.u[i * n + 1];
       this.u[i * n + this.numY - 1] = this.u[i * n + this.numY - 2];
@@ -97,7 +101,7 @@ export class Fluid {
       this.w[i * n + 0] = this.w[i * n + 1];
       this.w[i * n + this.numY - 1] = this.w[i * n + this.numY - 2];
     }
-    // Manejo de bordes verticales
+    // Bordes verticales
     for (let j = 0; j < this.numY; j++) {
       this.u[0 * n + j] = this.u[1 * n + j];
       this.u[(this.numX - 1) * n + j] = this.u[(this.numX - 2) * n + j];
@@ -108,13 +112,14 @@ export class Fluid {
     }
   }
 
-  // Muestra campo de velocidad
+  // Muestrea un campo de velocidad en una posición
   sampleField(x, y, field) {
     const n = this.numY;
     const h = this.h;
     const h1 = 1.0 / h;
     const h2 = 0.5 * h;
 
+    // Limita coordenadas dentro del dominio
     x = Math.max(Math.min(x, this.numX * h), h);
     y = Math.max(Math.min(y, this.numY * h), h);
 
@@ -122,7 +127,7 @@ export class Fluid {
     let dy = 0.0;
     let f;
 
-    // Selecciona datos y desplaza según el tipo de campo
+    // Selecciona campo a muestrear
     switch (field) {
       case U_FIELD:
         f = this.u;
@@ -141,6 +146,7 @@ export class Fluid {
         return 0.0;
     }
 
+    // Calcula interpolación bilineal
     const x0 = Math.min(Math.floor((x - dx) * h1), this.numX - 1);
     const tx = (x - dx - x0 * h) * h1;
     const x1 = Math.min(x0 + 1, this.numX - 1);
@@ -160,6 +166,7 @@ export class Fluid {
     );
   }
 
+  // Calcula velocidad horizontal promedio
   avgU(i, j) {
     const n = this.numY;
     return (
@@ -171,6 +178,7 @@ export class Fluid {
     );
   }
 
+  // Calcula velocidad vertical promedio
   avgV(i, j) {
     const n = this.numY;
     return (
@@ -182,6 +190,7 @@ export class Fluid {
     );
   }
 
+  // Calcula velocidad en profundidad promedio
   avgW(i, j) {
     const n = this.numY;
     return (
@@ -193,6 +202,7 @@ export class Fluid {
     );
   }
 
+  // Advección de velocidades
   advectVel(dt) {
     this.newU.set(this.u);
     this.newV.set(this.v);
@@ -204,7 +214,7 @@ export class Fluid {
 
     for (let i = 1; i < this.numX; i++) {
       for (let j = 1; j < this.numY; j++) {
-        // u component
+        // Componente horizontal
         if (
           this.s[i * n + j] != 0.0 &&
           this.s[(i - 1) * n + j] != 0.0 &&
@@ -220,7 +230,7 @@ export class Fluid {
           this.newU[i * n + j] =
             Math.abs(u) < this.velocityThreshold ? 0 : u * this.viscosity;
         }
-        // v component
+        // Componente vertical
         if (
           this.s[i * n + j] != 0.0 &&
           this.s[i * n + j - 1] != 0.0 &&
@@ -236,7 +246,7 @@ export class Fluid {
           this.newV[i * n + j] =
             Math.abs(v) < this.velocityThreshold ? 0 : v * this.viscosity;
         }
-        // w component
+        // Componente de profundidad
         if (
           this.s[i * n + j] != 0.0 &&
           i < this.numX - 1 &&
@@ -251,84 +261,77 @@ export class Fluid {
           y = y - dt * v;
           w = this.sampleField(x, y, W_FIELD);
 
-          // La desintegración del campo w a lo largo del tiempo (simulando la difusión en la dirección z)）
+          // Aplica viscosidad y umbral
           this.newW[i * n + j] =
-            Math.abs(w) < this.velocityThreshold ? 0 : w * this.viscosity * 1.0; // 0,95 es el factor de atenuación, que se puede ajustar
+            Math.abs(w) < this.velocityThreshold ? 0 : w * this.viscosity * 1.0;
         }
       }
     }
 
+    // Actualiza velocidades
     this.u.set(this.newU);
     this.v.set(this.newV);
     this.w.set(this.newW);
   }
 
-  // Cálculo de la advección del campo de densidad
+  // Advección de densidades
   advectDensities(dt) {
     const n = this.numY;
     const h = this.h;
     const h2 = 0.5 * h;
 
-    // // Crea campo de densidad temporal
+    // Crea campo temporal para densidades
     const tempDensities = this.densityField.createTemp();
 
-    // Calcular para cada celda de la grilla
     for (let i = 1; i < this.numX - 1; i++) {
       for (let j = 1; j < this.numY - 1; j++) {
         if (this.s[i * n + j] !== 0.0) {
-          // velocidad de cálculo
+          // Calcula velocidad promedio
           const u = (this.u[i * n + j] + this.u[(i + 1) * n + j]) * 0.5;
           const v = (this.v[i * n + j] + this.v[i * n + j + 1]) * 0.5;
 
-          // punto de retroceso
+          // Calcula posición de origen
           const x = i * h + h2 - dt * u;
           const y = j * h + h2 - dt * v;
 
-          // Muestra la densidad de todos los fluidos desde la posición de retroceso
+          // Muestrea densidades en posición de origen
           const sampledDensities = this.sampleDensities(x, y);
 
-          // Considerar el impacto del campo w sobre la densidad (efecto de inyección)
+          // Efecto de inyección desde profundidad
           const w = this.w[i * n + j];
           if (w > 0) {
-            // Un w positivo indica que hay líquido inyectado desde la dirección z
-            for (const fluidType in sampledDensities) {
-              if (fluidType === "milk") {
-                // Suponer que el líquido inyectado es leche
-                // Aumentar la densidad según el valor de w
-                const addedDensity = w * dt * 0.5; // El coeficiente es ajustable
-                sampledDensities[fluidType] += addedDensity;
-                // Asegurarse de que la densidad no supere 1.0
-                sampledDensities[fluidType] = Math.min(
-                  sampledDensities[fluidType],
-                  1.0
-                );
-              }
+            if ("milk" in sampledDensities) {
+              const addedDensity = w * dt * 0.5;
+              sampledDensities["milk"] += addedDensity;
+              sampledDensities["milk"] = Math.min(sampledDensities["milk"], 1.0);
             }
           }
 
-          // Almacenar los resultados de la muestra en un campo de densidad temporal
+          // Almacena en campo temporal
           tempDensities[i * n + j] = sampledDensities;
         }
       }
     }
 
-    // Actualiza el campo de densidad
+    // Actualiza campo de densidad
     this.densityField.updateFromTemp(tempDensities);
   }
 
-  // Muestra el campo de densidad
+  // Muestrea densidades en una posición
   sampleDensities(x, y) {
     const n = this.numY;
     const h = this.h;
     const h1 = 1.0 / h;
     const h2 = 0.5 * h;
 
+    // Limita coordenadas
     x = Math.max(Math.min(x, this.numX * h), h);
     y = Math.max(Math.min(y, this.numY * h), h);
 
     const dx = h2;
     const dy = h2;
 
+    // Calcula índices para interpolación
     const x0 = Math.min(Math.floor((x - dx) * h1), this.numX - 1);
     const tx = (x - dx - x0 * h) * h1;
     const x1 = Math.min(x0 + 1, this.numX - 1);
@@ -340,13 +343,13 @@ export class Fluid {
     const sx = 1.0 - tx;
     const sy = 1.0 - ty;
 
-    // Obtener los valores de densidad en las cuatro esquinas
+    // Obtiene densidades en los 4 puntos cercanos
     const d00 = this.densityField.getDensities(x0, y0);
     const d10 = this.densityField.getDensities(x1, y0);
     const d11 = this.densityField.getDensities(x1, y1);
     const d01 = this.densityField.getDensities(x0, y1);
 
-    // Realiza una interpolación bilineal para cada tipo de fluido
+    // Interpola para cada tipo de fluido
     const result = {};
     for (const fluidType in d00) {
       result[fluidType] =
@@ -359,43 +362,34 @@ export class Fluid {
     return result;
   }
 
-  // Añadir un nuevo método en la clase Fluid
+  // Limpia velocidades en bordes sólidos
   clearBoundaryVelocities() {
     const n = this.numY;
 
     for (let i = 0; i < this.numX; i++) {
       for (let j = 0; j < this.numY; j++) {
-        // Verificar si es una celda sólida
-        if (this.s[i * n + j] === 0.0) {
-          // Establecer la velocidad de la celda sólida en 0.
+        if (this.s[i * n + j] === 0.0) {  // Si es sólido
           this.u[i * n + j] = 0;
           this.v[i * n + j] = 0;
           this.w[i * n + j] = 0;
 
-          // Eliminar la velocidad 'u' en el borde derecho de la celda sólida
-          if (i < this.numX - 1) {
-            this.u[(i + 1) * n + j] = 0;
-          }
-
-          // Eliminar la velocidad 'v' en el borde superior de la celda sólida
-          if (j < this.numY - 1) {
-            this.v[i * n + j + 1] = 0;
-          }
+          // Limpia velocidades en bordes adyacentes
+          if (i < this.numX - 1) this.u[(i + 1) * n + j] = 0;
+          if (j < this.numY - 1) this.v[i * n + j + 1] = 0;
         }
       }
     }
   }
 
+  // Ejecuta un paso completo de simulación
   simulate(dt, gravity, numIters, overRelaxation, viscosity) {
     this.viscosity = viscosity;
-
     this.integrate(dt, gravity);
     this.p.fill(0.0);
     this.solveIncompressibility(numIters, dt, overRelaxation);
     this.extrapolate();
     this.advectVel(dt);
     this.advectDensities(dt);
-    // Eliminar la velocidad en los bordes al final de cada paso de simulación
     this.clearBoundaryVelocities();
   }
 }

@@ -39,7 +39,6 @@ export const config = {
       strength: 0.05,    // Intensidad del vertido
     },
 
-    // Parámetros del modo de succión
     suction: {
       radius: 0.1,       // Área de succión
       strength: 0.1,     // Fuerza de succión
@@ -52,4 +51,3 @@ export const config = {
     frameNr: 0,          // Número de frame actual
   },
 };
-

@@ -6,6 +6,9 @@ import { StirringSimulator } from "./fluid/stir.js";
 import { SuctionSimulator } from "./fluid/suction.js"; // Simulador de succión
 import { Controls } from "./interaction/controlPanel.js";
 import { config, SIMULATION_MODES } from "./config.js"; // Importa modos de simulación
+import { AudioManager } from './audioManager.js'; // Asegúrate de que la ruta sea correcta
+
+const audioManager = new AudioManager();
 
 // Configuración del canvas
 const canvas = document.getElementById("myCanvas");

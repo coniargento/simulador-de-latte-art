@@ -64,9 +64,9 @@ body {
   position: relative;
   margin-top: -80px;
 
-  /* 定義基礎單位，基於咖啡杯尺寸 */
+  /*Definir las unidades base, basadas en el tamaño de una taza de café */
   --cup-size: min(80vw, 560px);
-  --border-width: calc(var(--cup-size) * 0.043); /* 約為24px，當尺寸為560px時 */
+  --border-width: calc(var(--cup-size) * 0.043); /* Aproximadamente 24px cuando el tamaño es de 560px */
 }
 
 #myCanvas {
@@ -78,7 +78,7 @@ body {
   z-index: 1;
 }
 
-/* 提取共享的基本樣式 - 主要是定位和通用屬性 */
+/* Extraer los estilos básicos compartidos: principalmente posicionamiento y propiedades generales */
 .border-base {
   position: absolute;
   top: 50%;
@@ -88,7 +88,7 @@ body {
   pointer-events: none;
 }
 
-/* 外層容器 */
+/* Contenedor externo */
 .outer-border-container {
   width: calc(var(--cup-size) + var(--border-width) * 1.6);
   height: calc(var(--cup-size) + var(--border-width) * 1.6);
@@ -98,7 +98,7 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* 外邊緣 - 從左上到右下是白色到灰色的漸變 */
+/* Borde exterior: degradado de blanco a gris desde la esquina superior izquierda hasta la inferior derecha */
 .outer-border {
   top: 0;
   left: 0;
@@ -107,7 +107,7 @@ body {
   border-radius: 50%;
   background: linear-gradient(135deg, rgb(255, 255, 255), rgb(228, 226, 225));
 
-  /* 创建遮罩效果，使中心区域透明 */
+  /* Crear un efecto de máscara para que la zona central sea transparente */
   -webkit-mask: radial-gradient(
     circle at center,
     transparent calc(var(--cup-size) / 2),
@@ -120,7 +120,7 @@ body {
   );
 }
 
-/* 邊緣本體 - 圓環狀、較粗、顏色為米色 */
+/* Borde principal: forma de anillo, más grueso, color beige */
 .main-border {
   width: calc(var(--cup-size) - var(--border-width) * 0.5);
   height: calc(var(--cup-size) - var(--border-width) * 0.5);
@@ -128,7 +128,7 @@ body {
   z-index: 2;
 }
 
-/* 內邊緣 - 從左上到右下是灰色到白色的漸變 */
+/* Borde interior: degradado de gris a blanco desde la esquina superior izquierda hasta la inferior derecha */
 .inner-border {
   width: calc(var(--cup-size) - var(--border-width) * 0.6);
   height: calc(var(--cup-size) - var(--border-width) * 0.6);
@@ -159,7 +159,7 @@ body {
   transform: translateX(120%);
 }
 
-/* 手機版面配置 */
+/* Configuración de la vista móvil */
 @media (max-width: 768px) {
   .controls {
     width: 85%;
@@ -236,27 +236,27 @@ input[type="range"] {
   height: 48px;
   max-width: 450px;
 
-  /* 新增定位樣式 */
+  /* Añadir estilos de posicionamiento */
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 40px; /* 距離底部40px */
-  z-index: 50; /* 確保按鈕在適當的層級 */
+  bottom: 40px; /* A 40px del fondo */
+  z-index: 50; /* Asegurar que el botón esté en el nivel adecuado */
   /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
 }
 
-/* 添加模式選擇器容器的樣式 */
+/* Añadir estilo al contenedor del selector de modo */
 .mode-selector-container {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 120px; /* 比重新開始按鈕高一些 */
+  bottom: 120px; /* Un poco más alto que el botón de reiniciar */
   width: 90%;
   max-width: 450px;
   z-index: 50;
 }
 
-/* 更新模式選擇器樣式，使其適應新位置 */
+/* Actualizar los estilos del selector de modo para que se adapten a la nueva ubicación. */
 .mode-selector {
   display: flex;
   gap: 8px;
@@ -278,7 +278,7 @@ input[type="range"] {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* 手機適配 */
+/* Adaptación para móvil */
 @media (max-width: 768px) {
   .mode-btn {
     font-size: 0.75em;
@@ -298,7 +298,7 @@ input[type="range"] {
   color: white;
 }
 
-/* 捲軸樣式 */
+/* Estilo de la barra de desplazamiento */
 .controls::-webkit-scrollbar {
   width: 6px;
 }
@@ -314,4 +314,29 @@ input[type="range"] {
 
 .controls::-webkit-scrollbar-thumb:hover {
   background: rgba(74, 52, 41, 0.7);
+}
+
+.audio-controls {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 100;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.audio-controls button {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+}
+
+.audio-controls input[type="range"] {
+  width: 80px;
 }
