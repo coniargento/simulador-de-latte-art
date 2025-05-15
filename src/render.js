@@ -46,16 +46,18 @@ export class FluidRenderer {
   }
 
   getFluidColor(density, isSolid = false) {
-    // Si es una celda sólida, se devuelve color azul
     if (isSolid) {
-      return [...this.hexToRgb(this.solidColor), 255];
+      return [30, 100, 200, 255]; // Azul para sólidos
     }
-
-    // Asegura que la densidad esté entre 0 y 1
+    
     density = Math.min(Math.max(density, 0.0), 1.0);
-
-    // Mezcla de color de fondo y color de leche (en HEX)
-    return this.mixHexColors(this.backgroundColor, this.milkColor, density);
+    
+    return [
+      Math.floor(180 * (1 - density) + 255 * density), // R
+      Math.floor(148 * (1 - density) + 252 * density), // G
+      Math.floor(97 * (1 - density) + 245 * density),  // B
+      255
+    ];
   }
 
   draw(fluid, options = {}) {

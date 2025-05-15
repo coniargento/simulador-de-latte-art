@@ -3,12 +3,10 @@ import { FluidRenderer } from "./render.js";
 import { FluidInteraction } from "./interaction/interaction.js";
 import { MilkInjector } from "./fluid/pouring.js";
 import { StirringSimulator } from "./fluid/stir.js";
-import { SuctionSimulator } from "./fluid/suction.js"; // Simulador de succión
+import { SuctionSimulator } from "./fluid/suction.js";
 import { Controls } from "./interaction/controlPanel.js";
-import { config, SIMULATION_MODES } from "./config.js"; // Importa modos de simulación
-import { AudioManager } from './audioManager.js'; // Asegúrate de que la ruta sea correcta
-
-const audioManager = new AudioManager();
+import { config, SIMULATION_MODES } from "./config.js";
+import { AudioManager } from './audioManager.js';
 
 // Configuración del canvas
 const canvas = document.getElementById("myCanvas");
@@ -19,6 +17,9 @@ const size = Math.min(
 canvas.width = size;
 canvas.height = size;
 canvas.focus();
+
+// Inicializa el audio manager
+const audioManager = new AudioManager();
 
 // Estado de la simulación
 let fluid;
@@ -48,7 +49,7 @@ function setupModeButtons() {
     stirringBtn.classList.remove("active");
     suctionBtn.classList.remove("active");
     interaction.setInteractionHandler(milkInjector);
-    console.log("modo verter");
+    audioManager.playSound('pour');
   });
 
   stirringBtn.addEventListener("click", () => {
@@ -57,7 +58,7 @@ function setupModeButtons() {
     pouringBtn.classList.remove("active");
     suctionBtn.classList.remove("active");
     interaction.setInteractionHandler(stirringSimulator);
-    console.log("modo revolver");
+    audioManager.playSound('stir');
   });
 
   suctionBtn.addEventListener("click", () => {
@@ -66,17 +67,17 @@ function setupModeButtons() {
     pouringBtn.classList.remove("active");
     stirringBtn.classList.remove("active");
     interaction.setInteractionHandler(suctionSimulator);
-    console.log("modo succión");
+    audioManager.playSound('suction');
   });
 }
 
 // Manejo de cambios en parámetros
 function handleParamChange(section, property) {
   if (section === "display" && property === "resolution") {
-    init(); // Cambiar la resolución requiere reiniciar
+    init();
   }
   if (section === "fluid" && property === "viscosity") {
-    fluid.viscosity = config.fluid.viscosity; // Actualizar viscosidad del fluido
+    fluid.viscosity = config.fluid.viscosity;
   }
 }
 
@@ -86,7 +87,7 @@ const controls = new Controls(config, handleParamChange);
 // Inicializa y empieza la simulación
 function init() {
   const domainHeight = 1.0;
-  const domainWidth = domainHeight; // Dominio cuadrado
+  const domainWidth = domainHeight;
   const h = domainHeight / config.display.resolution;
 
   const numX = Math.floor(domainWidth / h);
@@ -100,7 +101,6 @@ function init() {
     config.fluid.viscosity
   );
 
-  // Configura el límite circular
   setupCircularBoundary(fluid);
 
   if (!renderer) {
@@ -111,45 +111,37 @@ function init() {
     interaction = new FluidInteraction(canvas, renderer);
   }
 
-  // Inicializar los simuladores
   milkInjector = new MilkInjector(fluid, config);
   stirringSimulator = new StirringSimulator(fluid, config);
   suctionSimulator = new SuctionSimulator(fluid, config);
 
-  // Establecer el modo por defecto
   interaction.setInteractionHandler(
     config.simulation.currentMode === SIMULATION_MODES.STIRRING
       ? stirringSimulator
       : milkInjector
   );
-
-  console.log("Simulación iniciada");
 }
 
 // Botón de reinicio
 document.getElementById("restartButton").addEventListener("click", () => {
   init();
   config.debug.frameNr = 0;
+  audioManager.playSound('pour');
 });
 
-// Esta función configura el borde circular
+// Configura el borde circular
 function setupCircularBoundary(fluid) {
   const n = fluid.numY;
   const centerX = (fluid.numX - 3) / 2;
   const centerY = (fluid.numY - 3) / 2;
-  const radius = Math.min(centerX, centerY) * 0.99; // Un poco menor que el máximo posible
+  const radius = Math.min(centerX, centerY) * 0.99;
 
   for (let i = 0; i < fluid.numX; i++) {
     for (let j = 0; j < fluid.numY; j++) {
       const dx = i - centerX;
       const dy = j - centerY;
       const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist > radius) {
-        fluid.s[i * n + j] = 0.0; // Fuera del círculo: sólido
-      } else {
-        fluid.s[i * n + j] = 1.0; // Dentro del círculo: fluido
-      }
+      fluid.s[i * n + j] = dist > radius ? 0.0 : 1.0;
     }
   }
 }
