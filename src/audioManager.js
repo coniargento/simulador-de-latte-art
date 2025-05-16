@@ -6,6 +6,7 @@ export class AudioManager {
     this.audioContext = null;
     this.backgroundSource = null;
     this.gainNode = null;
+    this.currentSound = null; // Para rastrear el sonido actualmente en reproducción
     this.init();
   }
 
@@ -20,9 +21,9 @@ export class AudioManager {
       // 2. Cargar sonidos
       await this.loadSounds({
         background: 'https://cdn.freesound.org/previews/457/457250_7724336-lq.mp3', // Café verificado
-        // pour: 'https://assets.mixkit.co/active_storage/sfx/1244/1244-preview.mp3',
-        // stir: 'https://assets.mixkit.co/active_storage/sfx/1240/1240-preview.mp3',
-        // suction: 'https://assets.mixkit.co/active_storage/sfx/1257/1257-preview.mp3'
+        pour: 'https://assets.mixkit.co/active_storage/sfx/1244/1244-preview.mp3',
+        stir: 'https://assets.mixkit.co/active_storage/sfx/1240/1240-preview.mp3',
+        suction: 'https://assets.mixkit.co/active_storage/sfx/1257/1257-preview.mp3'
       });
 
       // 3. Iniciar música de fondo automáticamente (en loop)
@@ -79,10 +80,27 @@ export class AudioManager {
   playSound(name) {
     if (this.isMuted || !this.sounds[name]) return;
 
+    // Detener el sonido actual si existe
+    if (this.currentSound) {
+      this.currentSound.stop();
+      this.currentSound.disconnect();
+    }
+
     const source = this.audioContext.createBufferSource();
     source.buffer = this.sounds[name];
     source.connect(this.gainNode);
     source.start(0);
+
+    // Guardar referencia al sonido actual
+    this.currentSound = source;
+
+    // Limpiar la referencia cuando el sonido termine
+    source.onended = () => {
+      if (this.currentSound === source) {
+        this.currentSound = null;
+      }
+    };
+
     return source;
   }
 
