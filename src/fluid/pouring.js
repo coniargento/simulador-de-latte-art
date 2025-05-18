@@ -5,12 +5,24 @@ export class MilkInjector {
     this.injectX = 0.0;
     this.injectY = 0.0;
     this.isActive = false;
+    this.audioManager = null;
+    this.pourSound = null;
+  }
+
+  setAudioManager(audioManager) {
+    this.audioManager = audioManager;
   }
 
   start(x, y) {
     this.injectX = x;
     this.injectY = y;
     this.isActive = true;
+    
+    // Iniciar el sonido de vertido
+    if (this.audioManager && !this.pourSound) {
+      this.pourSound = this.audioManager.playSound('pour');
+    }
+    
     this.applyInjection(x, y, true);
   }
 
@@ -24,6 +36,12 @@ export class MilkInjector {
 
   end() {
     this.isActive = false;
+    
+    // Detener el sonido cuando se deja de verter
+    if (this.pourSound) {
+      this.pourSound.stop();
+      this.pourSound = null;
+    }
   }
 
   applyInjection(x, y, reset) {

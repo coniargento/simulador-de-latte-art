@@ -1,73 +1,110 @@
 export class AudioManager {
   constructor() {
     this.sounds = {};
-    this.volume = 0.3; // Volumen inicial bajo (30%)
+    this.volume = 0.3;
     this.isMuted = false;
     this.audioContext = null;
     this.backgroundSource = null;
     this.gainNode = null;
-    this.currentSound = null; // Para rastrear el sonido actualmente en reproducción
+    this.currentSound = null;
     this.init();
   }
 
   async init() {
     try {
-      // 1. Crear contexto de audio
+      console.log('Iniciando AudioManager...');
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      if (!this.audioContext) {
+        throw new Error('No se pudo crear el contexto de audio');
+      }
+
       this.gainNode = this.audioContext.createGain();
       this.gainNode.gain.value = this.volume;
       this.gainNode.connect(this.audioContext.destination);
 
-      // 2. Cargar sonidos
-      await this.loadSounds({
-        background: 'https://cdn.freesound.org/previews/457/457250_7724336-lq.mp3', // Café verificado
-        pour: 'https://assets.mixkit.co/active_storage/sfx/1244/1244-preview.mp3',
-        stir: 'https://assets.mixkit.co/active_storage/sfx/1240/1240-preview.mp3',
-        suction: 'https://assets.mixkit.co/active_storage/sfx/1257/1257-preview.mp3'
-      });
+      const soundUrls = {
+        background: 'assets/sounds/cafe-ambiente.mp3',
+        pour: 'assets/sounds/verterleche.wav',
+        stir: 'assets/sounds/revolver.wav',
+        suction: 'assets/sounds/succionarpatron.flac'
+      };
 
-      // 3. Iniciar música de fondo automáticamente (en loop)
-      this.playBackground();
+      const possiblePaths = [
+        '', // Try as is
+        'src/', // Try with src/ prefix
+        '/src/', // Try with absolute /src/ prefix
+        '../' // Try going up one directory
+      ];
+
+      // Intentar cargar los sonidos uno por uno
+      for (const [name, baseUrl] of Object.entries(soundUrls)) {
+        let loaded = false;
+        
+        for (const prefix of possiblePaths) {
+          if (loaded) break;
+          
+          const url = prefix + baseUrl;
+          try {
+            console.log(`Intentando cargar sonido: ${name} desde ${url}`);
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+              console.log(`Ruta ${url} no funcionó, probando siguiente...`);
+              continue;
+            }
+            
+            const arrayBuffer = await response.arrayBuffer();
+            console.log(`Buffer obtenido para ${name}, decodificando...`);
+            this.sounds[name] = await this.audioContext.decodeAudioData(arrayBuffer);
+            console.log(`Sonido ${name} cargado y decodificado correctamente desde ${url}`);
+            loaded = true;
+          } catch (error) {
+            console.log(`Error intentando ${url}:`, error.message);
+          }
+        }
+
+        if (!loaded) {
+          console.error(`No se pudo cargar el sonido ${name} desde ninguna ruta intentada`);
+        }
+      }
+
+      // Verificar qué sonidos se cargaron
+      console.log('Sonidos cargados:', Object.keys(this.sounds));
+      
+      if (Object.keys(this.sounds).length === 0) {
+        throw new Error('No se pudo cargar ningún sonido');
+      }
+
       this.createControls();
 
-      // 4. Manejar desbloqueo en móviles
-      document.addEventListener('click', this.unlockAudio.bind(this), { once: true });
-      document.addEventListener('touchstart', this.unlockAudio.bind(this), { once: true });
+      // Intentar reproducir el sonido de fondo si está disponible
+      if (this.sounds.background) {
+        console.log('Iniciando reproducción de sonido de fondo...');
+        this.playBackground();
+      } else {
+        console.warn('Sonido de fondo no disponible');
+      }
 
     } catch (error) {
-      console.error('Audio error:', error);
+      console.error('Error inicializando audio:', error);
       this.createFallback();
-    }
-  }
-
-  async loadSounds(soundSources) {
-    for (const [name, url] of Object.entries(soundSources)) {
-      try {
-        const response = await fetch(url);
-        const buffer = await response.arrayBuffer();
-        this.sounds[name] = await this.audioContext.decodeAudioData(buffer);
-      } catch (error) {
-        console.warn(`Failed to load ${name}:`, error);
-        // Crear buffer vacío como fallback
-        this.sounds[name] = this.audioContext.createBuffer(1, 1, 22050);
-      }
-    }
-  }
-
-  unlockAudio() {
-    if (this.audioContext.state === 'suspended') {
-      this.audioContext.resume();
     }
   }
 
   playBackground() {
     if (this.backgroundSource) return;
     
-    this.backgroundSource = this.audioContext.createBufferSource();
-    this.backgroundSource.buffer = this.sounds.background;
-    this.backgroundSource.loop = true;
-    this.backgroundSource.connect(this.gainNode);
-    this.backgroundSource.start(0);
+    try {
+      this.backgroundSource = this.audioContext.createBufferSource();
+      this.backgroundSource.buffer = this.sounds.background;
+      this.backgroundSource.loop = true;
+      this.backgroundSource.connect(this.gainNode);
+      this.backgroundSource.start(0);
+      console.log('Sonido de fondo iniciado correctamente');
+    } catch (error) {
+      console.error('Error reproduciendo sonido de fondo:', error);
+    }
   }
 
   stopBackground() {
@@ -78,30 +115,34 @@ export class AudioManager {
   }
 
   playSound(name) {
-    if (this.isMuted || !this.sounds[name]) return;
-
-    // Detener el sonido actual si existe
-    if (this.currentSound) {
-      this.currentSound.stop();
-      this.currentSound.disconnect();
-    }
-
-    const source = this.audioContext.createBufferSource();
-    source.buffer = this.sounds[name];
-    source.connect(this.gainNode);
-    source.start(0);
-
-    // Guardar referencia al sonido actual
-    this.currentSound = source;
-
-    // Limpiar la referencia cuando el sonido termine
-    source.onended = () => {
-      if (this.currentSound === source) {
-        this.currentSound = null;
+    try {
+      if (!this.audioContext || !this.sounds[name]) {
+        return null;
       }
-    };
 
-    return source;
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
+      }
+
+      if (this.currentSound) {
+        try {
+          this.currentSound.stop();
+          this.currentSound.disconnect();
+        } catch (e) {
+          console.warn('Error deteniendo sonido actual:', e);
+        }
+      }
+
+      const source = this.audioContext.createBufferSource();
+      source.buffer = this.sounds[name];
+      source.connect(this.gainNode);
+      source.start(0);
+      this.currentSound = source;
+      return source;
+    } catch (error) {
+      console.error('Error reproduciendo sonido:', error);
+      return null;
+    }
   }
 
   createControls() {
@@ -135,7 +176,6 @@ export class AudioManager {
 
     document.body.appendChild(controls);
 
-    // Control de música de fondo
     document.getElementById('bg-toggle').addEventListener('click', () => {
       if (this.backgroundSource) {
         this.stopBackground();
@@ -146,14 +186,12 @@ export class AudioManager {
       }
     });
 
-    // Control de mute
     document.getElementById('mute-toggle').addEventListener('click', () => {
       this.isMuted = !this.isMuted;
       this.gainNode.gain.value = this.isMuted ? 0 : this.volume;
       document.getElementById('mute-toggle').textContent = this.isMuted ? '🔇' : '🔊';
     });
 
-    // Control de volumen
     document.getElementById('volume-control').addEventListener('input', (e) => {
       this.volume = parseFloat(e.target.value);
       if (!this.isMuted) {

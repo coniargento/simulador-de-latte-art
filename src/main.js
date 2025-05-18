@@ -112,6 +112,7 @@ function init() {
   }
 
   milkInjector = new MilkInjector(fluid, config);
+  milkInjector.setAudioManager(audioManager);
   stirringSimulator = new StirringSimulator(fluid, config);
   suctionSimulator = new SuctionSimulator(fluid, config);
 
