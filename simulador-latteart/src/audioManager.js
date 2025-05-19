@@ -6,7 +6,6 @@ export class AudioManager {
     this.audioContext = null;
     this.backgroundSource = null;
     this.gainNode = null;
-    this.currentSound = null; // Para rastrear el sonido actualmente en reproducción
     this.init();
   }
 
@@ -80,27 +79,10 @@ export class AudioManager {
   playSound(name) {
     if (this.isMuted || !this.sounds[name]) return;
 
-    // Detener el sonido actual si existe
-    if (this.currentSound) {
-      this.currentSound.stop();
-      this.currentSound.disconnect();
-    }
-
     const source = this.audioContext.createBufferSource();
     source.buffer = this.sounds[name];
     source.connect(this.gainNode);
     source.start(0);
-
-    // Guardar referencia al sonido actual
-    this.currentSound = source;
-
-    // Limpiar la referencia cuando el sonido termine
-    source.onended = () => {
-      if (this.currentSound === source) {
-        this.currentSound = null;
-      }
-    };
-
     return source;
   }
 
