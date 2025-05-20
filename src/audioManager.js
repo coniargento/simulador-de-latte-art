@@ -1,12 +1,14 @@
 export class AudioManager {
   constructor() {
     this.sounds = {};
-    this.volume = 0.3;
+    this.volume = 0.2;
+    this.effectsVolume = 1.5;
     this.isMuted = false;
     this.audioContext = null;
     this.backgroundSource = null;
     this.gainNode = null;
-    this.currentSound = null;
+    this.effectsGainNode = null;
+    this.activeEffects = {};
     this.init();
   }
 
@@ -19,12 +21,18 @@ export class AudioManager {
         throw new Error('No se pudo crear el contexto de audio');
       }
 
+      // Configurar nodo de ganancia para música de fondo
       this.gainNode = this.audioContext.createGain();
       this.gainNode.gain.value = this.volume;
       this.gainNode.connect(this.audioContext.destination);
 
+      // Configurar nodo de ganancia para efectos de sonido
+      this.effectsGainNode = this.audioContext.createGain();
+      this.effectsGainNode.gain.value = this.effectsVolume;
+      this.effectsGainNode.connect(this.audioContext.destination);
+
       const soundUrls = {
-        background: 'assets/sounds/cafe-ambiente.mp3',
+        background: 'assets/sounds/cafe-ambiente.wav',
         pour: 'assets/sounds/verterleche.wav',
         stir: 'assets/sounds/revolver.wav',
         suction: 'assets/sounds/succionarpatron.flac'
@@ -124,24 +132,48 @@ export class AudioManager {
         this.audioContext.resume();
       }
 
-      if (this.currentSound) {
-        try {
-          this.currentSound.stop();
-          this.currentSound.disconnect();
-        } catch (e) {
-          console.warn('Error deteniendo sonido actual:', e);
-        }
+      // Si el sonido ya está activo, lo detenemos y retornamos
+      if (this.activeEffects[name]) {
+        this.stopSound(name);
+        return null;
       }
+
+      // Detener cualquier otro efecto que esté sonando
+      Object.keys(this.activeEffects).forEach(activeName => {
+        if (activeName !== 'background') {
+          this.stopSound(activeName);
+        }
+      });
 
       const source = this.audioContext.createBufferSource();
       source.buffer = this.sounds[name];
-      source.connect(this.gainNode);
+      source.connect(this.effectsGainNode);
+      
+      // Guardar referencia al efecto activo
+      this.activeEffects[name] = source;
+      
+      // Configurar callback cuando el sonido termine
+      source.onended = () => {
+        delete this.activeEffects[name];
+      };
+      
       source.start(0);
-      this.currentSound = source;
       return source;
     } catch (error) {
       console.error('Error reproduciendo sonido:', error);
       return null;
+    }
+  }
+
+  stopSound(name) {
+    if (this.activeEffects[name]) {
+      try {
+        this.activeEffects[name].stop();
+        this.activeEffects[name].disconnect();
+      } catch (e) {
+        console.warn('Error deteniendo sonido:', e);
+      }
+      delete this.activeEffects[name];
     }
   }
 
@@ -169,13 +201,14 @@ export class AudioManager {
       <button id="mute-toggle" style="background:none; border:none; color:white; cursor:pointer">
         ${this.isMuted ? '🔇' : '🔊'}
       </button>
-      <input type="range" id="volume-control" min="0" max="1" step="0.05" value="${this.volume}" 
-             style="width:80px; cursor:pointer">
+      <input type="range" id="volume-control" min="0" max="2" step="0.1" value="${this.volume}" 
+             style="width:100px; cursor:pointer">
       <span id="volume-value" style="font-size:12px">${Math.round(this.volume * 100)}%</span>
     `;
 
     document.body.appendChild(controls);
 
+    // Event listeners para controles de música de fondo
     document.getElementById('bg-toggle').addEventListener('click', () => {
       if (this.backgroundSource) {
         this.stopBackground();
@@ -189,6 +222,7 @@ export class AudioManager {
     document.getElementById('mute-toggle').addEventListener('click', () => {
       this.isMuted = !this.isMuted;
       this.gainNode.gain.value = this.isMuted ? 0 : this.volume;
+      this.effectsGainNode.gain.value = this.isMuted ? 0 : this.effectsVolume;
       document.getElementById('mute-toggle').textContent = this.isMuted ? '🔇' : '🔊';
     });
 

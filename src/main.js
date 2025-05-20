@@ -7,6 +7,7 @@ import { SuctionSimulator } from "./fluid/suction.js";
 import { Controls } from "./interaction/controlPanel.js";
 import { config, SIMULATION_MODES } from "./config.js";
 import { AudioManager } from './audioManager.js';
+import { GameManager } from './gameManager.js';
 
 // Configuración del canvas
 const canvas = document.getElementById("myCanvas");
@@ -17,9 +18,13 @@ const size = Math.min(
 canvas.width = size;
 canvas.height = size;
 canvas.focus();
+canvas.style.zIndex = "2";
 
 // Inicializa el audio manager
 const audioManager = new AudioManager();
+
+// Inicializa el game manager
+const gameManager = new GameManager();
 
 // Estado de la simulación
 let fluid;
@@ -112,9 +117,32 @@ function init() {
   }
 
   milkInjector = new MilkInjector(fluid, config);
-  milkInjector.setAudioManager(audioManager);
   stirringSimulator = new StirringSimulator(fluid, config);
   suctionSimulator = new SuctionSimulator(fluid, config);
+
+  // Configurar el audio antes de envolver los manejadores
+  milkInjector.setAudioManager(audioManager);
+
+  // Configurar los manejadores de interacción con el gameManager
+  const wrapInteractionHandler = (handler) => {
+    const originalStart = handler.start.bind(handler);
+    const originalUpdate = handler.update.bind(handler);
+    const originalEnd = handler.end.bind(handler);
+
+    return {
+      start: (x, y) => {
+        gameManager.handleInteraction(x, y);
+        originalStart(x, y);
+      },
+      update: originalUpdate,
+      end: originalEnd
+    };
+  };
+
+  // Envolver los manejadores existentes
+  milkInjector = wrapInteractionHandler(milkInjector);
+  stirringSimulator = wrapInteractionHandler(stirringSimulator);
+  suctionSimulator = wrapInteractionHandler(suctionSimulator);
 
   interaction.setInteractionHandler(
     config.simulation.currentMode === SIMULATION_MODES.STIRRING
@@ -127,7 +155,6 @@ function init() {
 document.getElementById("restartButton").addEventListener("click", () => {
   init();
   config.debug.frameNr = 0;
-  audioManager.playSound('pour');
 });
 
 // Configura el borde circular
@@ -167,6 +194,13 @@ function update() {
 
   requestAnimationFrame(update);
 }
+
+// Agregar event listener para el movimiento del mouse
+canvas.addEventListener('mousemove', (e) => {
+  if (gameManager.isInTutorialMode()) {
+    gameManager.provideFeedback(e.clientX, e.clientY);
+  }
+});
 
 // Ejecutar todo
 setupModeButtons();

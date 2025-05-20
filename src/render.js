@@ -11,7 +11,7 @@ export class FluidRenderer {
     // Definición de colores en HEX
     this.backgroundColor = "#b49461"; // Marrón oscuro como fondo (RGB: 180, 148, 97)
     this.milkColor = "#FFFCF5";      // Blanco cálido como leche (RGB: 255, 252, 245)
-    this.solidColor = "#1E64C8";     // Azul para sólidos (RGB: 30, 100, 200)
+    this.solidColor = "#8B4513";     // Marrón oscuro para el borde de la taza
   }
 
   // Método para convertir HEX a RGB
@@ -47,7 +47,8 @@ export class FluidRenderer {
 
   getFluidColor(density, isSolid = false) {
     if (isSolid) {
-      return [30, 100, 200, 255]; // Azul para sólidos
+      const solidRgb = this.hexToRgb(this.solidColor);
+      return [...solidRgb, 255]; // Usar el color marrón definido para sólidos
     }
     
     density = Math.min(Math.max(density, 0.0), 1.0);

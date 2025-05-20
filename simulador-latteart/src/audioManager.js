@@ -1,7 +1,7 @@
 export class AudioManager {
   constructor() {
     this.sounds = {};
-    this.volume = 0.3; // Volumen inicial bajo (30%)
+    this.volume = 0.2; // Volumen inicial bajo (20%)
     this.isMuted = false;
     this.audioContext = null;
     this.backgroundSource = null;
