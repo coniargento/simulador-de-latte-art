@@ -4,11 +4,23 @@ export class StirringSimulator {
     this.config = config;
     this.stirX = 0.0;
     this.stirY = 0.0;
+    this.audioManager = null;
+    this.stirSound = null;
+  }
+
+  setAudioManager(audioManager) {
+    this.audioManager = audioManager;
   }
 
   start(x, y) {
     this.stirX = x;
     this.stirY = y;
+    
+    // Iniciar el sonido de revolver
+    if (this.audioManager && !this.stirSound) {
+      this.stirSound = this.audioManager.playSound('stir');
+    }
+    
     this.applyStirring(x, y, true);
   }
 
@@ -19,7 +31,11 @@ export class StirringSimulator {
   }
 
   end() {
-    // Trabajo de limpieza al finalizar la mezcla (si es necesario)
+    // Detener el sonido cuando se deja de revolver
+    if (this.stirSound) {
+      this.stirSound.stop();
+      this.stirSound = null;
+    }
   }
 
   applyStirring(x, y, reset) {

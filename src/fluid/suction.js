@@ -5,12 +5,24 @@ export class SuctionSimulator {
     this.suctionX = 0.0;
     this.suctionY = 0.0;
     this.isActive = false;
+    this.audioManager = null;
+    this.suctionSound = null;
+  }
+
+  setAudioManager(audioManager) {
+    this.audioManager = audioManager;
   }
 
   start(x, y) {
     this.suctionX = x;
     this.suctionY = y;
     this.isActive = true;
+    
+    // Iniciar el sonido de succión
+    if (this.audioManager && !this.suctionSound) {
+      this.suctionSound = this.audioManager.playSound('suction');
+    }
+    
     this.applySuction(x, y, true);
   }
 
@@ -24,6 +36,12 @@ export class SuctionSimulator {
 
   end() {
     this.isActive = false;
+    
+    // Detener el sonido cuando se deja de succionar
+    if (this.suctionSound) {
+      this.suctionSound.stop();
+      this.suctionSound = null;
+    }
   }
 
   applySuction(x, y, reset) {

@@ -54,7 +54,6 @@ function setupModeButtons() {
     stirringBtn.classList.remove("active");
     suctionBtn.classList.remove("active");
     interaction.setInteractionHandler(milkInjector);
-    audioManager.playSound('pour');
   });
 
   stirringBtn.addEventListener("click", () => {
@@ -63,7 +62,6 @@ function setupModeButtons() {
     pouringBtn.classList.remove("active");
     suctionBtn.classList.remove("active");
     interaction.setInteractionHandler(stirringSimulator);
-    audioManager.playSound('stir');
   });
 
   suctionBtn.addEventListener("click", () => {
@@ -72,7 +70,6 @@ function setupModeButtons() {
     pouringBtn.classList.remove("active");
     stirringBtn.classList.remove("active");
     interaction.setInteractionHandler(suctionSimulator);
-    audioManager.playSound('suction');
   });
 }
 
@@ -120,8 +117,10 @@ function init() {
   stirringSimulator = new StirringSimulator(fluid, config);
   suctionSimulator = new SuctionSimulator(fluid, config);
 
-  // Configurar el audio antes de envolver los manejadores
+  // Configurar el audio para todos los manejadores
   milkInjector.setAudioManager(audioManager);
+  stirringSimulator.setAudioManager(audioManager);
+  suctionSimulator.setAudioManager(audioManager);
 
   // Configurar los manejadores de interacción con el gameManager
   const wrapInteractionHandler = (handler) => {
@@ -199,6 +198,13 @@ function update() {
 canvas.addEventListener('mousemove', (e) => {
   if (gameManager.isInTutorialMode()) {
     gameManager.provideFeedback(e.clientX, e.clientY);
+  }
+});
+
+// Detener la interacción cuando el mouse sale del canvas
+canvas.addEventListener('mouseleave', () => {
+  if (interaction && interaction.currentHandler) {
+    interaction.currentHandler.end();
   }
 });
 

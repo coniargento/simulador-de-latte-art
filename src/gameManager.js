@@ -7,7 +7,7 @@ export class GameManager {
                 id: 1,
                 name: "Corazón Simple",
                 difficulty: "Principiante",
-                description: "Un clásico corazón de latte art, perfecto para comenzar",
+                description: "LOL",
                 imageUrl: "assets/patterns/heart.avif",
                 steps: [
                     "Vierte la leche en el centro hasta llenar 2/3 de la taza",

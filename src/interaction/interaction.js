@@ -27,6 +27,13 @@ export class FluidInteraction {
       this.drag(event.clientX, event.clientY);
     });
 
+    // Detener la interacción cuando el mouse sale del canvas
+    this.canvas.addEventListener("mouseleave", () => {
+      if (this.mouseDown) {
+        this.endDrag();
+      }
+    });
+
     // Touch events
     this.canvas.addEventListener("touchstart", (event) => {
       event.preventDefault();
