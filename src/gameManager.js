@@ -261,6 +261,9 @@ export class GameManager {
         this.patternGuide.setPattern(pattern);
         this.patternInfo.style.display = 'block';
         
+        // Iniciar el temporizador cuando se selecciona un patrón
+        this.startTimer();
+        
         this.patternInfo.innerHTML = `
             <h3 style="margin: 0 0 10px 0; font-size: 1.1em;">${pattern.name}</h3>
             <p style="margin: 0 0 10px 0; font-size: 0.9em; opacity: 0.8;">${pattern.description}</p>
@@ -527,10 +530,13 @@ export class GameManager {
             // Cambiar color según la similitud
             if (this.similarityScore > 80) {
                 this.similarityDisplay.style.color = '#4CAF50';
+                this.showFeedback("¡Excelente similitud!", 'success');
             } else if (this.similarityScore > 50) {
                 this.similarityDisplay.style.color = '#FFC107';
+                this.showFeedback("Buen intento, sigue practicando", 'info');
             } else {
-                this.similarityDisplay.style.color = '#white';
+                this.similarityDisplay.style.color = 'white';
+                this.showFeedback("Intenta seguir más de cerca el patrón", 'info');
             }
         }
     }
@@ -570,6 +576,9 @@ export class GameManager {
             Math.pow(y - checkpoint.y, 2)
         );
 
+        // Mostrar indicador visual del checkpoint actual
+        this.showCheckpointIndicator(checkpoint);
+
         if (distance < checkpoint.radius) {
             // Checkpoint alcanzado
             if (!this.checkpointsReached.includes(this.currentCheckpoint)) {
@@ -584,7 +593,41 @@ export class GameManager {
                     this.patternCompleted();
                 }
             }
+        } else if (distance < checkpoint.radius * 2) {
+            // Está cerca pero no lo suficiente
+            this.showFeedback("¡Casi! Ajusta un poco más", 'info');
         }
+    }
+
+    showCheckpointIndicator(checkpoint) {
+        // Crear o actualizar el indicador visual del checkpoint
+        if (!this.checkpointIndicator) {
+            this.checkpointIndicator = document.createElement('div');
+            this.checkpointIndicator.style.cssText = `
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                border: 2px solid rgba(255,255,255,0.8);
+                pointer-events: none;
+                z-index: 1000;
+                transform: translate(-50%, -50%);
+                transition: all 0.3s ease;
+                display: none;
+            `;
+            document.body.appendChild(this.checkpointIndicator);
+        }
+
+        const canvas = document.getElementById('myCanvas');
+        const rect = canvas.getBoundingClientRect();
+        
+        // Convertir coordenadas relativas a píxeles
+        const pixelX = rect.left + (checkpoint.x * rect.width);
+        const pixelY = rect.top + (checkpoint.y * rect.height);
+
+        this.checkpointIndicator.style.left = `${pixelX}px`;
+        this.checkpointIndicator.style.top = `${pixelY}px`;
+        this.checkpointIndicator.style.display = 'block';
     }
 
     showFeedback(message, type = 'info') {
@@ -608,7 +651,7 @@ export class GameManager {
         // Calcular puntuación final incluyendo la similitud
         const timeBonus = Math.max(0, this.timeRemaining);
         const similarityBonus = Math.round(this.similarityScore);
-        this.score += timeBonus + similarityBonus;
+        const finalScore = this.score + timeBonus + similarityBonus;
 
         // Mostrar resultado final
         const overlay = document.createElement('div');
@@ -619,27 +662,32 @@ export class GameManager {
             transform: translate(-50%, -50%);
             background: rgba(0,0,0,0.9);
             color: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 30px;
+            border-radius: 15px;
             text-align: center;
             z-index: 2000;
+            min-width: 300px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         `;
         
         overlay.innerHTML = `
-            <h2>¡Patrón Completado!</h2>
-            <p>Puntuación Base: ${this.score - timeBonus - similarityBonus}</p>
-            <p>Bonus por Tiempo: ${timeBonus}</p>
-            <p>Bonus por Similitud: ${similarityBonus}</p>
-            <p>Puntuación Total: ${this.score}</p>
-            <p>Similitud con el Patrón: ${Math.round(this.similarityScore)}%</p>
+            <h2 style="margin: 0 0 20px 0; color: #4CAF50;">¡Patrón Completado!</h2>
+            <div style="margin-bottom: 20px;">
+                <p style="margin: 10px 0; font-size: 1.1em;">Puntuación Base: ${this.score}</p>
+                <p style="margin: 10px 0; font-size: 1.1em;">Bonus por Tiempo: +${timeBonus}</p>
+                <p style="margin: 10px 0; font-size: 1.1em;">Bonus por Similitud: +${similarityBonus}</p>
+                <p style="margin: 15px 0; font-size: 1.3em; color: #4CAF50;">Puntuación Total: ${finalScore}</p>
+                <p style="margin: 10px 0; font-size: 1.1em;">Similitud con el Patrón: ${Math.round(this.similarityScore)}%</p>
+            </div>
             <button onclick="this.parentElement.remove(); location.reload();" style="
-                background: white;
-                color: black;
+                background: #4CAF50;
+                color: white;
                 border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
-                margin-top: 10px;
+                padding: 12px 25px;
+                border-radius: 8px;
+                font-size: 1.1em;
                 cursor: pointer;
+                transition: all 0.3s ease;
             ">Intentar Otro Patrón</button>
         `;
         

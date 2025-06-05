@@ -12,9 +12,10 @@ export class PatternGuide {
         // Crear un nuevo canvas para la guía
         this.guideCanvas = document.createElement('canvas');
         this.guideCanvas.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
             pointer-events: none;
             opacity: ${this.opacity};
             z-index: 1;
@@ -97,14 +98,20 @@ export class PatternGuide {
             
             // Calcular dimensiones para mantener la proporción
             const scale = Math.min(
-                this.guideCanvas.width / this.guideImage.width,
-                this.guideCanvas.height / this.guideImage.height
-            ) * 0.8; // Reducir un poco el tamaño para que quepa dentro de la taza
+                (this.guideCanvas.width * 0.8) / this.guideImage.width,  // Reducir el ancho al 80%
+                (this.guideCanvas.height * 0.8) / this.guideImage.height  // Reducir el alto al 80%
+            );
             
             const width = this.guideImage.width * scale;
             const height = this.guideImage.height * scale;
+            
+            // Centrar la imagen en el canvas
             const x = (this.guideCanvas.width - width) / 2;
             const y = (this.guideCanvas.height - height) / 2;
+            
+            // Dibujar la imagen con un fondo semi-transparente
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(x, y, width, height);
             
             ctx.drawImage(this.guideImage, x, y, width, height);
             ctx.restore();
