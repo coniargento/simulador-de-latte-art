@@ -100,6 +100,17 @@ export class GameManager {
         this.lastPosition = null;
         this.trajectoryPoints = [];
         this.similarityScore = 0;
+        this.canvasEnabled = false;
+        this.isDrawing = false;
+        this.lastX = 0;
+        this.lastY = 0;
+        
+        // Guardar referencia al canvas
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        
+        // Deshabilitar el canvas al inicio
+        this.canvas.style.pointerEvents = 'none';
         
         // Inicializar la guía de patrones
         this.patternGuide = new PatternGuide(canvas);
@@ -113,6 +124,29 @@ export class GameManager {
         this.patternImage = this.patternInfoPanel.querySelector('.pattern-image img');
         this.startPatternBtn = this.patternInfoPanel.querySelector('.start-pattern-btn');
         
+        // Obtener referencia al botón de reiniciar y ocultarlo al inicio
+        this.restartButton = document.getElementById('restartButton');
+        if (this.restartButton) {
+            this.restartButton.classList.add('hidden');
+            // Configurar el evento click del botón de reiniciar
+            this.restartButton.addEventListener('click', () => {
+                console.log('Botón reiniciar presionado');
+                this.clearCanvas();
+                this.startTutorial();
+                this.patternGuide.setPattern(this.currentPattern);
+                // Asegurarnos de que el botón permanezca visible
+                this.restartButton.classList.remove('hidden');
+            });
+        }
+        
+        // Deshabilitar los botones de modo al inicio
+        const modeButtons = document.querySelectorAll('.mode-btn');
+        modeButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        });
+        
         this.setupPatternButtons();
         this.setupTimer();
         this.setupValidationOverlay();
@@ -122,20 +156,36 @@ export class GameManager {
 
     setupPatternButtons() {
         const patternButtons = document.querySelectorAll('.pattern-nav-btn');
+        console.log('Botones de patrón encontrados:', patternButtons.length);
+        
         patternButtons.forEach(button => {
             button.addEventListener('click', () => {
+                console.log('Botón de patrón clickeado');
+                
                 // Remover la clase active de todos los botones
                 patternButtons.forEach(btn => btn.classList.remove('active'));
                 // Agregar la clase active al botón clickeado
                 button.classList.add('active');
                 
                 const patternId = button.getAttribute('data-pattern');
+                console.log('ID del patrón seleccionado:', patternId);
+                
                 const pattern = this.patterns.find(p => p.id === patternId);
+                console.log('Patrón encontrado:', pattern);
+                
                 if (pattern) {
                     // Reproducir sonido de selección
                     const audio = new Audio('assets/sounds/select.mp3');
                     audio.volume = 0.3;
                     audio.play();
+                    
+                    // Deshabilitar los botones de modo
+                    const modeButtons = document.querySelectorAll('.mode-btn');
+                    modeButtons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                    });
                     
                     // Mostrar el panel de información con una animación suave
                     this.selectPattern(pattern);
@@ -301,9 +351,42 @@ export class GameManager {
         document.body.appendChild(gameContainer);
     }
 
+    clearCanvas() {
+        // Limpiar el canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Limpiar la trayectoria
+        this.trajectoryPoints = [];
+        // Limpiar el último checkpoint
+        this.currentCheckpoint = 0;
+        // Limpiar los checkpoints alcanzados
+        this.checkpointsReached = [];
+        // Limpiar el último punto
+        this.lastPosition = null;
+        // Limpiar el puntaje de similitud
+        this.similarityScore = 0;
+        // Actualizar el display de similitud
+        const similarityDisplay = document.querySelector('.similarity-display');
+        if (similarityDisplay) {
+            similarityDisplay.textContent = 'Similitud: 0%';
+        }
+    }
+
     selectPattern(pattern) {
         console.log('Seleccionando patrón:', pattern.name);
+        
+        // Deshabilitar el canvas
+        this.canvasEnabled = false;
+        this.canvas.style.pointerEvents = 'none';
+        console.log('Canvas deshabilitado, canvasEnabled:', this.canvasEnabled);
+        
+        // Limpiar el canvas
+        this.clearCanvas();
+        
+        // Actualizar el patrón actual
         this.currentPattern = pattern;
+        
+        // Verificar que el panel existe
+        console.log('Panel de información:', this.patternInfoPanel);
         
         // Actualizar el panel de información
         this.patternTitle.textContent = pattern.name;
@@ -323,34 +406,61 @@ export class GameManager {
         this.patternImage.alt = `Patrón ${pattern.name}`;
         
         // Mostrar el panel con una animación suave
+        console.log('Mostrando panel de información');
         this.patternInfoPanel.classList.remove('hidden');
-        setTimeout(() => {
-            this.patternInfoPanel.classList.add('visible');
-        }, 10);
+        this.patternInfoPanel.style.display = 'block';
+        this.patternInfoPanel.style.opacity = '0';
+        
+        // Forzar un reflow
+        this.patternInfoPanel.offsetHeight;
+        
+        // Agregar la clase visible y establecer la opacidad
+        this.patternInfoPanel.classList.add('visible');
+        this.patternInfoPanel.style.opacity = '1';
+        
+        console.log('Panel de información mostrado');
+
+        // Habilitar el botón de comenzar
+        this.startPatternBtn.disabled = false;
+        this.startPatternBtn.style.opacity = '1';
+        this.startPatternBtn.style.cursor = 'pointer';
         
         // Configurar el botón de comenzar
         this.startPatternBtn.onclick = () => {
-            // Reproducir sonido de inicio
-            const audio = new Audio('assets/sounds/start.mp3');
-            audio.volume = 0.3;
-            audio.play();
+            console.log('Botón comenzar presionado');
+            
+            // Habilitar el canvas inmediatamente
+            this.canvasEnabled = true;
+            this.canvas.style.pointerEvents = 'auto';
+            console.log('Canvas habilitado, canvasEnabled:', this.canvasEnabled);
+            
+            // Mostrar el botón de reiniciar
+            if (this.restartButton) {
+                this.restartButton.classList.remove('hidden');
+            }
             
             // Ocultar el panel de información
-            this.patternInfoPanel.classList.remove('visible');
+            console.log('Ocultando panel de información');
+            this.patternInfoPanel.style.opacity = '0';
             setTimeout(() => {
+                this.patternInfoPanel.classList.remove('visible');
                 this.patternInfoPanel.classList.add('hidden');
+                this.patternInfoPanel.style.display = 'none';
+                console.log('Panel de información oculto');
             }, 300);
+            
+            // Habilitar los botones de modo
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            modeButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            });
             
             // Iniciar el tutorial y mostrar la guía
             this.startTutorial();
             this.patternGuide.setPattern(pattern);
         };
-        
-        // Ocultar la guía hasta que se presione Comenzar
-        this.patternGuide.clearGuide();
-        if (this.patternGuide.opacityControl) {
-            this.patternGuide.opacityControl.style.display = 'none';
-        }
     }
 
     startTimer() {
@@ -574,40 +684,40 @@ export class GameManager {
     }
 
     resetPattern() {
-        if (!this.currentPattern) return;
+        console.log('Reiniciando patrón');
         
-        // Detener el temporizador actual
-        if (this.timer) {
-            clearInterval(this.timer);
-            this.timer = null;
-        }
-        
-        // Ocultar el botón de exportación
-        document.getElementById('exportButton').style.display = 'none';
-        
-        // Reiniciar el estado del temporizador
-        this.isTimerStarted = false;
-        this.timeRemaining = 10;
-        
-        // Ocultar el contenedor del temporizador
-        const timerContainer = document.getElementById('timer-container');
-        if (timerContainer) {
-            timerContainer.style.display = 'none';
+        // Ocultar el botón de reiniciar
+        if (this.restartButton) {
+            this.restartButton.classList.add('hidden');
         }
         
         // Limpiar el canvas
-        const canvas = document.getElementById('myCanvas');
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        this.clearCanvas();
         
-        // Reiniciar el patrón actual
-        if (this.currentPattern) {
-            this.selectPattern(this.currentPattern);
-        }
+        // Reiniciar variables
+        this.trajectoryPoints = [];
+        this.currentCheckpoint = 0;
+        this.checkpointsReached = [];
+        this.lastPosition = null;
+        this.similarityScore = 0;
         
+        // Reiniciar el timer
+        this.stopTimer();
+        this.timeRemaining = 60;
+        this.updateTimerDisplay();
+        
+        // Reiniciar el tutorial si está activo
         if (this.isInTutorial) {
-            this.endTutorial();
+            this.currentTutorialStep = 0;
+            this.showTutorialStep();
         }
+        
+        // Habilitar el canvas
+        this.canvasEnabled = true;
+        this.canvas.style.pointerEvents = 'auto';
+        
+        // Iniciar el timer
+        this.startTimer();
     }
 
     getCurrentPattern() {
@@ -721,12 +831,6 @@ export class GameManager {
     }
 
     handleInteraction(x, y) {
-        // Iniciar el temporizador con la primera interacción si no está activo
-        if (!this.isTimerStarted && !this.timer) {
-            this.isTimerStarted = true;
-            this.startTimer();
-        }
-
         // Guardar la posición para el tracking
         const currentPosition = { x, y };
         this.trajectoryPoints.push(currentPosition);
@@ -966,5 +1070,47 @@ export class GameManager {
                 document.body.removeChild(overlay);
             });
         });
+    }
+
+    validatePattern() {
+        console.log('Validando patrón');
+        if (!this.currentPattern || this.trajectoryPoints.length === 0) {
+            console.log('No hay patrón o trayectoria para validar');
+            return;
+        }
+
+        // Calcular similitud
+        const similarity = this.calculateSimilarity(this.trajectoryPoints, this.currentPattern.points);
+        this.similarityScore = similarity;
+
+        // Actualizar display de similitud
+        const similarityDisplay = document.querySelector('.similarity-display');
+        if (similarityDisplay) {
+            similarityDisplay.textContent = `Similitud: ${Math.round(similarity * 100)}%`;
+        }
+
+        // Mostrar resultado
+        const validationOverlay = document.querySelector('.validation-overlay');
+        if (validationOverlay) {
+            validationOverlay.classList.remove('hidden');
+            setTimeout(() => {
+                validationOverlay.classList.add('visible');
+            }, 10);
+        }
+
+        // Mostrar el botón de reiniciar
+        if (this.restartButton) {
+            this.restartButton.classList.remove('hidden');
+        }
+
+        // Ocultar resultado después de 3 segundos
+        setTimeout(() => {
+            if (validationOverlay) {
+                validationOverlay.classList.remove('visible');
+                setTimeout(() => {
+                    validationOverlay.classList.add('hidden');
+                }, 300);
+            }
+        }, 3000);
     }
 } 
