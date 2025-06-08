@@ -24,7 +24,7 @@ canvas.style.zIndex = "2";
 const audioManager = new AudioManager();
 
 // Inicializa el game manager
-const gameManager = new GameManager();
+const gameManager = new GameManager(canvas);
 
 // Estado de la simulación
 let fluid;
@@ -34,12 +34,17 @@ let stirringSimulator;
 let suctionSimulator;
 let milkInjector;
 
-// Mostrar y ocultar el panel de controles
-const toggleControlsBtn = document.getElementById("toggleControls");
-const controlsPanel = document.querySelector(".controls");
+// Configuración del panel de controles
+const controlsPanel = document.querySelector('.controls');
+const toggleControlsBtn = document.getElementById('toggleControls');
 
-toggleControlsBtn.addEventListener("click", () => {
-  controlsPanel.classList.toggle("hidden");
+// Asegurarse de que el panel esté oculto al inicio
+controlsPanel.classList.add('hidden');
+controlsPanel.classList.remove('visible');
+
+toggleControlsBtn.addEventListener('click', () => {
+  controlsPanel.classList.toggle('hidden');
+  controlsPanel.classList.toggle('visible');
 });
 
 // Configuración de botones para cambiar el modo de simulación
@@ -49,27 +54,33 @@ function setupModeButtons() {
   const suctionBtn = document.getElementById("suctionMode");
 
   pouringBtn.addEventListener("click", () => {
+    console.log("Cambiando a modo vertido");
     config.simulation.currentMode = SIMULATION_MODES.POURING;
     pouringBtn.classList.add("active");
     stirringBtn.classList.remove("active");
     suctionBtn.classList.remove("active");
     interaction.setInteractionHandler(milkInjector);
+    audioManager.playSound('pour');
   });
 
   stirringBtn.addEventListener("click", () => {
+    console.log("Cambiando a modo revolver");
     config.simulation.currentMode = SIMULATION_MODES.STIRRING;
     stirringBtn.classList.add("active");
     pouringBtn.classList.remove("active");
     suctionBtn.classList.remove("active");
     interaction.setInteractionHandler(stirringSimulator);
+    audioManager.playSound('stir');
   });
 
   suctionBtn.addEventListener("click", () => {
+    console.log("Cambiando a modo succión");
     config.simulation.currentMode = SIMULATION_MODES.SUCTION;
     suctionBtn.classList.add("active");
     pouringBtn.classList.remove("active");
     stirringBtn.classList.remove("active");
     interaction.setInteractionHandler(suctionSimulator);
+    audioManager.playSound('suction');
   });
 }
 
@@ -88,6 +99,7 @@ const controls = new Controls(config, handleParamChange);
 
 // Inicializa y empieza la simulación
 function init() {
+  console.log("Inicializando simulación");
   const domainHeight = 1.0;
   const domainWidth = domainHeight;
   const h = domainHeight / config.display.resolution;
@@ -111,6 +123,7 @@ function init() {
 
   if (!interaction) {
     interaction = new FluidInteraction(canvas, renderer);
+    window.fluidInteraction = interaction;
   }
 
   milkInjector = new MilkInjector(fluid, config);
@@ -143,17 +156,18 @@ function init() {
   stirringSimulator = wrapInteractionHandler(stirringSimulator);
   suctionSimulator = wrapInteractionHandler(suctionSimulator);
 
-  interaction.setInteractionHandler(
-    config.simulation.currentMode === SIMULATION_MODES.STIRRING
-      ? stirringSimulator
-      : milkInjector
-  );
+  // Configurar los botones de modo
+  setupModeButtons();
+
+  // Establecer el modo inicial
+  interaction.setInteractionHandler(milkInjector);
 }
 
 // Botón de reinicio
 document.getElementById("restartButton").addEventListener("click", () => {
   init();
   config.debug.frameNr = 0;
+  gameManager.resetPattern();
 });
 
 // Configura el borde circular

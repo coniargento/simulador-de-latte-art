@@ -9,9 +9,122 @@
   <body>
     <header class="navbar">
       <div class="nav-title">simulador de latte art</div>
-      <button id="toggleControls" class="nav-btn">
-        <span class="nav-icon">⚙️</span>
-      </button>
+      <div class="pattern-section">
+        <span class="pattern-label">Patrones</span>
+        <div class="pattern-buttons">
+          <button class="pattern-nav-btn" data-pattern="heart">
+            Corazón
+            <div class="pattern-preview">
+              <img src="assets/patterns/patron1-corazon.png" alt="Patrón Corazón">
+            </div>
+          </button>
+          <button class="pattern-nav-btn" data-pattern="rosetta">
+            Roseta
+            <div class="pattern-preview">
+              <img src="assets/patterns/rosetta.jpg" alt="Patrón Roseta">
+            </div>
+          </button>
+          <button class="pattern-nav-btn" data-pattern="swan">
+            Cisne
+            <div class="pattern-preview">
+              <img src="assets/patterns/cisne.webp" alt="Patrón Cisne">
+            </div>
+          </button>
+        </div>
+      </div>
+      <div class="config-wrapper">
+        <button id="toggleControls" class="nav-btn">
+          <span class="nav-icon">⚙️</span>
+        </button>
+        <div class="controls hidden">
+          <div class="control-group">
+            <h3>Configuración de visualización</h3>
+            <div>
+              <label for="resolution">Resolución:</label>
+              <input type="range" id="resolution" min="80" max="300" step="20" />
+              <span class="value-display" id="resolution-value"></span>
+            </div>
+            <div>
+              <label>
+                <input type="checkbox" id="showStreamlines" /> Mostrar líneas de flujo
+              </label>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h3>Parámetros del fluido</h3>
+            <div>
+              <label for="viscosity">Viscosidad:</label>
+              <input
+                type="range"
+                id="viscosity"
+                min="0.9"
+                max="1.0"
+                step="0.005"
+                value="0.98"
+              />
+              <span class="value-display" id="viscosity-value">0.98</span>
+            </div>
+            <div>
+              <label for="gravity">Gravedad:</label>
+              <input type="range" id="gravity" min="-20" max="20" step="1" />
+              <span class="value-display" id="gravity-value"></span>
+            </div>
+            <div>
+              <label for="numIters">Iteraciones:</label>
+              <input type="range" id="numIters" min="10" max="100" step="5" />
+              <span class="value-display" id="numIters-value"></span>
+            </div>
+            <div>
+              <label for="overRelaxation">Sobre-relajación:</label>
+              <input type="range" id="overRelaxation" min="1" max="2" step="0.1" />
+              <span class="value-display" id="overRelaxation-value"></span>
+            </div>
+          </div>
+
+          <div class="control-group" id="pouringControls">
+            <h3>Configuración de vertido</h3>
+            <div>
+              <label for="pourRadius">Radio:</label>
+              <input type="range" id="pourRadius" min="0.01" max="0.1" step="0.01" />
+              <span class="value-display" id="pourRadius-value"></span>
+            </div>
+            <div>
+              <label for="pourStrength">Fuerza:</label>
+              <input type="range" id="pourStrength" min="0.5" max="5" step="0.5" />
+              <span class="value-display" id="pourStrength-value"></span>
+            </div>
+          </div>
+
+          <div class="control-group" id="stirringControls">
+            <h3>Configuración de revolver</h3>
+            <div>
+              <label for="stirRadius">Radio:</label>
+              <input type="range" id="stirRadius" min="0.05" max="0.3" step="0.05" />
+              <span class="value-display" id="stirRadius-value"></span>
+            </div>
+            <div>
+              <label for="stirStrength">Fuerza:</label>
+              <input type="range" id="stirStrength" min="0.5" max="5" step="0.5" />
+              <span class="value-display" id="stirStrength-value"></span>
+            </div>
+          </div>
+
+          <div class="control-group" id="suctionControls">
+            <h3>Configuración de succión</h3>
+            <div>
+              <label for="suctionRadius">Radio:</label>
+              <input type="range" id="suctionRadius" min="0.01" max="0.2" step="0.01" />
+              <span class="value-display" id="suctionRadius-value"></span>
+            </div>
+            <div>
+              <label for="suctionStrength">Fuerza:</label>
+              <input type="range" id="suctionStrength" min="0.5" max="5" step="0.5" />
+              <span class="value-display" id="suctionStrength-value"></span>
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
 
     <main>
@@ -22,6 +135,22 @@
         <div class="border-base inner-border"></div>
         <div class="border-base main-border"></div>
         <canvas id="myCanvas"></canvas>
+      </div>
+
+      <div class="pattern-info-panel hidden">
+        <div class="pattern-info-header">
+          <h2 class="pattern-title"></h2>
+          <span class="pattern-difficulty"></span>
+        </div>
+        <div class="pattern-description"></div>
+        <div class="pattern-steps">
+          <h3>Pasos a seguir:</h3>
+          <ol class="steps-list"></ol>
+        </div>
+        <div class="pattern-image">
+          <img src="" alt="Patrón de ejemplo">
+        </div>
+        <button class="start-pattern-btn">Comenzar</button>
       </div>
 
       <div class="mode-selector-container">
@@ -39,95 +168,7 @@
       </div>
 
       <button id="restartButton">Reiniciar</button>
-
-      <div class="controls hidden">
-        <div class="control-group">
-          <h3>Configuración de visualización</h3>
-          <div>
-            <label for="resolution">Resolución:</label>
-            <input type="range" id="resolution" min="80" max="300" step="20" />
-            <span class="value-display" id="resolution-value"></span>
-          </div>
-          <div>
-            <label>
-              <input type="checkbox" id="showStreamlines" /> Mostrar líneas de flujo
-            </label>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <h3>Parámetros del fluido</h3>
-          <div>
-            <label for="viscosity">Viscosidad:</label>
-            <input
-              type="range"
-              id="viscosity"
-              min="0.9"
-              max="1.0"
-              step="0.005"
-              value="0.98"
-            />
-            <span class="value-display" id="viscosity-value">0.98</span>
-          </div>
-          <div>
-            <label for="gravity">Gravedad:</label>
-            <input type="range" id="gravity" min="-20" max="20" step="1" />
-            <span class="value-display" id="gravity-value"></span>
-          </div>
-          <div>
-            <label for="numIters">Iteraciones:</label>
-            <input type="range" id="numIters" min="10" max="100" step="5" />
-            <span class="value-display" id="numIters-value"></span>
-          </div>
-          <div>
-            <label for="overRelaxation">Sobre-relajación:</label>
-            <input type="range" id="overRelaxation" min="1" max="2" step="0.1" />
-            <span class="value-display" id="overRelaxation-value"></span>
-          </div>
-        </div>
-
-        <div class="control-group" id="pouringControls">
-          <h3>Configuración de vertido</h3>
-          <div>
-            <label for="pourRadius">Radio:</label>
-            <input type="range" id="pourRadius" min="0.01" max="0.1" step="0.01" />
-            <span class="value-display" id="pourRadius-value"></span>
-          </div>
-          <div>
-            <label for="pourStrength">Fuerza:</label>
-            <input type="range" id="pourStrength" min="0.5" max="5" step="0.5" />
-            <span class="value-display" id="pourStrength-value"></span>
-          </div>
-        </div>
-
-        <div class="control-group" id="stirringControls">
-          <h3>Configuración de revolver</h3>
-          <div>
-            <label for="stirRadius">Radio:</label>
-            <input type="range" id="stirRadius" min="0.05" max="0.3" step="0.05" />
-            <span class="value-display" id="stirRadius-value"></span>
-          </div>
-          <div>
-            <label for="stirStrength">Fuerza:</label>
-            <input type="range" id="stirStrength" min="0.5" max="5" step="0.5" />
-            <span class="value-display" id="stirStrength-value"></span>
-          </div>
-        </div>
-
-        <div class="control-group" id="suctionControls">
-          <h3>Configuración de succión</h3>
-          <div>
-            <label for="suctionRadius">Radio:</label>
-            <input type="range" id="suctionRadius" min="0.01" max="0.2" step="0.01" />
-            <span class="value-display" id="suctionRadius-value"></span>
-          </div>
-          <div>
-            <label for="suctionStrength">Fuerza:</label>
-            <input type="range" id="suctionStrength" min="0.5" max="5" step="0.5" />
-            <span class="value-display" id="suctionStrength-value"></span>
-          </div>
-        </div>
-      </div>
+      <button id="exportButton" style="display: none;">Exportar Dibujo</button>
     </main>
 
     <script type="module" src="src/main.js"></script>

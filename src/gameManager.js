@@ -1,14 +1,14 @@
 import { PatternGuide } from './patternGuide.js';
 
 export class GameManager {
-    constructor() {
+    constructor(canvas) {
         this.patterns = [
             {
-                id: 1,
+                id: "heart",
                 name: "Corazón Simple",
                 difficulty: "Principiante",
-                description: "LOL",
-                imageUrl: "assets/patterns/heart.avif",
+                description: "Un corazón básico perfecto para principiantes",
+                imageUrl: "assets/patterns/patron1-corazon.png",
                 steps: [
                     "Vierte la leche en el centro hasta llenar 2/3 de la taza",
                     "Mueve suavemente de lado a lado para crear la base",
@@ -31,15 +31,21 @@ export class GameManager {
                 }
             },
             {
-                id: 2,
-                name: "Roseta Básica",
+                id: "rosetta",
+                name: "Roseta",
                 difficulty: "Intermedio",
-                description: "Una hermosa roseta de múltiples capas",
+                description: "Una roseta clásica con múltiples capas",
                 imageUrl: "assets/patterns/rosetta.jpg",
                 steps: [
-                    "Comienza vertiendo en el centro para crear la base",
-                    "Mueve de lado a lado mientras retrocedes",
-                    "Finaliza atravesando para crear el tallo"
+                    "Comienza con un vertido suave en el centro",
+                    "Mueve la jarra de lado a lado creando capas",
+                    "Finaliza con un movimiento rápido hacia adelante"
+                ],
+                checkpoints: [
+                    { x: 0.5, y: 0.8, radius: 0.1, message: "¡Buen comienzo!" },
+                    { x: 0.4, y: 0.7, radius: 0.1, message: "Primera capa" },
+                    { x: 0.6, y: 0.6, radius: 0.1, message: "Segunda capa" },
+                    { x: 0.5, y: 0.3, radius: 0.1, message: "¡Perfecto, terminaste el tallo!" }
                 ],
                 tutorial: {
                     initialPosition: { x: 0.5, y: 0.8 },
@@ -53,15 +59,21 @@ export class GameManager {
                 }
             },
             {
-                id: 3,
+                id: "swan",
                 name: "Cisne",
                 difficulty: "Avanzado",
-                description: "Un elegante cisne con cuello curvo",
+                description: "Un elegante cisne con detalles finos",
                 imageUrl: "assets/patterns/cisne.webp",
                 steps: [
-                    "Crea la base con movimientos circulares",
-                    "Forma el cuerpo con movimientos ondulantes",
-                    "Termina con una curva para el cuello del cisne"
+                    "Crea la base del cisne con un vertido suave",
+                    "Forma el cuello con movimientos precisos",
+                    "Añade los detalles finales del pico y las alas"
+                ],
+                checkpoints: [
+                    { x: 0.5, y: 0.8, radius: 0.1, message: "¡Buen comienzo!" },
+                    { x: 0.4, y: 0.6, radius: 0.1, message: "Forma el cuerpo" },
+                    { x: 0.6, y: 0.5, radius: 0.1, message: "Crea las alas" },
+                    { x: 0.7, y: 0.3, radius: 0.1, message: "¡Perfecto, terminaste el cuello!" }
                 ],
                 tutorial: {
                     initialPosition: { x: 0.5, y: 0.8 },
@@ -90,13 +102,46 @@ export class GameManager {
         this.similarityScore = 0;
         
         // Inicializar la guía de patrones
-        const canvas = document.getElementById('myCanvas');
         this.patternGuide = new PatternGuide(canvas);
         
-        this.setupUI();
+        // Inicializar el panel de información
+        this.patternInfoPanel = document.querySelector('.pattern-info-panel');
+        this.patternTitle = this.patternInfoPanel.querySelector('.pattern-title');
+        this.patternDifficulty = this.patternInfoPanel.querySelector('.pattern-difficulty');
+        this.patternDescription = this.patternInfoPanel.querySelector('.pattern-description');
+        this.stepsList = this.patternInfoPanel.querySelector('.steps-list');
+        this.patternImage = this.patternInfoPanel.querySelector('.pattern-image img');
+        this.startPatternBtn = this.patternInfoPanel.querySelector('.start-pattern-btn');
+        
+        this.setupPatternButtons();
         this.setupTimer();
         this.setupValidationOverlay();
         this.setupSimilarityDisplay();
+        this.setupExportButton();
+    }
+
+    setupPatternButtons() {
+        const patternButtons = document.querySelectorAll('.pattern-nav-btn');
+        patternButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remover la clase active de todos los botones
+                patternButtons.forEach(btn => btn.classList.remove('active'));
+                // Agregar la clase active al botón clickeado
+                button.classList.add('active');
+                
+                const patternId = button.getAttribute('data-pattern');
+                const pattern = this.patterns.find(p => p.id === patternId);
+                if (pattern) {
+                    // Reproducir sonido de selección
+                    const audio = new Audio('assets/sounds/select.mp3');
+                    audio.volume = 0.3;
+                    audio.play();
+                    
+                    // Mostrar el panel de información con una animación suave
+                    this.selectPattern(pattern);
+                }
+            });
+        });
     }
 
     setupTimer() {
@@ -257,50 +302,85 @@ export class GameManager {
     }
 
     selectPattern(pattern) {
+        console.log('Seleccionando patrón:', pattern.name);
         this.currentPattern = pattern;
-        this.patternGuide.setPattern(pattern);
-        this.patternInfo.style.display = 'block';
         
-        // Iniciar el temporizador cuando se selecciona un patrón
-        this.startTimer();
+        // Actualizar el panel de información
+        this.patternTitle.textContent = pattern.name;
+        this.patternDifficulty.textContent = pattern.difficulty;
+        this.patternDescription.textContent = pattern.description;
         
-        this.patternInfo.innerHTML = `
-            <h3 style="margin: 0 0 10px 0; font-size: 1.1em;">${pattern.name}</h3>
-            <p style="margin: 0 0 10px 0; font-size: 0.9em; opacity: 0.8;">${pattern.description}</p>
-            <div style="font-size: 0.9em;">
-                <strong>Pasos:</strong>
-                <ol style="margin: 5px 0 0 20px; padding: 0;">
-                    ${pattern.steps.map(step => `<li>${step}</li>`).join('')}
-                </ol>
-            </div>
-            <div style="margin-top: 15px;">
-                <button id="startTutorial" style="
-                    background: rgba(255,255,255,0.2);
-                    border: none;
-                    padding: 8px 15px;
-                    border-radius: 4px;
-                    color: white;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                ">Iniciar Tutorial</button>
-            </div>
-        `;
-
-        document.getElementById('startTutorial').addEventListener('click', () => this.startTutorial());
+        // Limpiar y llenar la lista de pasos
+        this.stepsList.innerHTML = '';
+        pattern.steps.forEach(step => {
+            const li = document.createElement('li');
+            li.textContent = step;
+            this.stepsList.appendChild(li);
+        });
+        
+        // Actualizar la imagen
+        this.patternImage.src = pattern.imageUrl;
+        this.patternImage.alt = `Patrón ${pattern.name}`;
+        
+        // Mostrar el panel con una animación suave
+        this.patternInfoPanel.classList.remove('hidden');
+        setTimeout(() => {
+            this.patternInfoPanel.classList.add('visible');
+        }, 10);
+        
+        // Configurar el botón de comenzar
+        this.startPatternBtn.onclick = () => {
+            // Reproducir sonido de inicio
+            const audio = new Audio('assets/sounds/start.mp3');
+            audio.volume = 0.3;
+            audio.play();
+            
+            // Ocultar el panel de información
+            this.patternInfoPanel.classList.remove('visible');
+            setTimeout(() => {
+                this.patternInfoPanel.classList.add('hidden');
+            }, 300);
+            
+            // Iniciar el tutorial y mostrar la guía
+            this.startTutorial();
+            this.patternGuide.setPattern(pattern);
+        };
+        
+        // Ocultar la guía hasta que se presione Comenzar
+        this.patternGuide.clearGuide();
+        if (this.patternGuide.opacityControl) {
+            this.patternGuide.opacityControl.style.display = 'none';
+        }
     }
 
     startTimer() {
-        if (this.timer) return; // No iniciar si ya está corriendo
+        // Asegurarse de que no haya un temporizador activo
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
         
-        document.getElementById('timer-container').style.display = 'block';
+        // Mostrar el contenedor del temporizador
+        const timerContainer = document.getElementById('timer-container');
+        if (timerContainer) {
+            timerContainer.style.display = 'block';
+        }
+        
+        // Reiniciar el tiempo
         this.timeRemaining = 10;
+        this.isTimerStarted = true;
         this.updateTimerDisplay();
         
+        // Iniciar el nuevo temporizador
         this.timer = setInterval(() => {
             this.timeRemaining--;
             this.updateTimerDisplay();
             
             if (this.timeRemaining <= 0) {
+                clearInterval(this.timer);
+                this.timer = null;
+                this.isTimerStarted = false;
+                document.getElementById('exportButton').style.display = 'block';
                 this.endTime();
             }
         }, 1000);
@@ -311,53 +391,126 @@ export class GameManager {
             clearInterval(this.timer);
             this.timer = null;
         }
+        this.isTimerStarted = false;
         document.getElementById('timer-container').style.display = 'none';
     }
 
     endTime() {
+        // Detener el temporizador
         this.stopTimer();
         
-        // Crear overlay de tiempo terminado
+        // Deshabilitar la interacción con el canvas
+        const canvas = document.getElementById('myCanvas');
+        canvas.style.pointerEvents = 'none';
+        
+        // Detener cualquier interacción fluida activa
+        if (window.fluidInteraction) {
+            window.fluidInteraction.disableInteraction();
+        }
+        
+        // Deshabilitar los botones de modo
+        document.getElementById('pouringMode').disabled = true;
+        document.getElementById('stirringMode').disabled = true;
+        document.getElementById('suctionMode').disabled = true;
+        
+        // Mostrar el botón de exportación
+        document.getElementById('exportButton').style.display = 'block';
+        
+        // Obtener el canvas y calcular la similitud
+        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+        const similarityScore = this.patternGuide.compareWithGuide(canvas);
+        
+        // Crear overlay para mostrar los resultados
         const overlay = document.createElement('div');
         overlay.style.cssText = `
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        `;
-        
-        const message = document.createElement('div');
-        message.style.cssText = `
-            background: white;
-            padding: 20px 40px;
-            border-radius: 10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
             text-align: center;
-        `;
-        message.innerHTML = `
-            <h2 style="margin: 0 0 10px 0;">¡Tiempo Terminado!</h2>
-            <p style="margin: 0 0 15px 0;">Has alcanzado el límite de 1 minuto.</p>
-            <button id="closeTimeUp" style="
-                background: #333;
-                color: white;
-                border: none;
-                padding: 8px 20px;
-                border-radius: 5px;
-                cursor: pointer;
-            ">Cerrar</button>
+            z-index: 2000;
+            min-width: 300px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         `;
         
-        overlay.appendChild(message);
+        // Determinar el mensaje y color según la similitud
+        let message, color;
+        if (similarityScore > 80) {
+            message = "¡Excelente trabajo!";
+            color = "#4CAF50";
+        } else if (similarityScore > 50) {
+            message = "¡Buen intento!";
+            color = "#FFC107";
+        } else {
+            message = "Sigue practicando";
+            color = "#FF4444";
+        }
+        
+        overlay.innerHTML = `
+            <h2 style="margin: 0 0 20px 0; color: ${color};">${message}</h2>
+            <div style="margin-bottom: 20px;">
+                <p style="margin: 10px 0; font-size: 1.1em;">Similitud con el patrón: ${Math.round(similarityScore)}%</p>
+                <div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
+                    <div>
+                        <p style="margin: 0 0 10px 0;">Tu dibujo:</p>
+                        <img src="${dataURL}" style="max-width: 200px; border-radius: 8px;">
+                    </div>
+                    <div>
+                        <p style="margin: 0 0 10px 0;">Patrón original:</p>
+                        <img src="${this.currentPattern.imageUrl}" style="max-width: 200px; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="downloadImage" style="
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 12px 25px;
+                    border-radius: 8px;
+                    font-size: 1.1em;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">Descargar Imagen</button>
+                <button id="closeOverlay" style="
+                    background: #666;
+                    color: white;
+                    border: none;
+                    padding: 12px 25px;
+                    border-radius: 8px;
+                    font-size: 1.1em;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">Cerrar</button>
+            </div>
+        `;
+        
         document.body.appendChild(overlay);
         
-        document.getElementById('closeTimeUp').addEventListener('click', () => {
+        // Agregar eventos a los botones
+        document.getElementById('downloadImage').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'latte-art-' + new Date().toISOString().slice(0, 10) + '.jpg';
+            link.href = dataURL;
+            link.click();
+        });
+        
+        document.getElementById('closeOverlay').addEventListener('click', () => {
             document.body.removeChild(overlay);
-            this.resetPattern();
+            // Habilitar la interacción con el canvas nuevamente
+            canvas.style.pointerEvents = 'auto';
+            // Habilitar los botones de modo
+            document.getElementById('pouringMode').disabled = false;
+            document.getElementById('stirringMode').disabled = false;
+            document.getElementById('suctionMode').disabled = false;
+            // Habilitar la interacción fluida
+            if (window.fluidInteraction) {
+                window.fluidInteraction.enableInteraction();
+            }
         });
     }
 
@@ -423,8 +576,34 @@ export class GameManager {
     resetPattern() {
         if (!this.currentPattern) return;
         
-        this.stopTimer();
+        // Detener el temporizador actual
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+        
+        // Ocultar el botón de exportación
+        document.getElementById('exportButton').style.display = 'none';
+        
+        // Reiniciar el estado del temporizador
         this.isTimerStarted = false;
+        this.timeRemaining = 10;
+        
+        // Ocultar el contenedor del temporizador
+        const timerContainer = document.getElementById('timer-container');
+        if (timerContainer) {
+            timerContainer.style.display = 'none';
+        }
+        
+        // Limpiar el canvas
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Reiniciar el patrón actual
+        if (this.currentPattern) {
+            this.selectPattern(this.currentPattern);
+        }
         
         if (this.isInTutorial) {
             this.endTutorial();
@@ -693,5 +872,99 @@ export class GameManager {
         
         document.body.appendChild(overlay);
         this.stopTimer();
+    }
+
+    setupExportButton() {
+        const exportButton = document.getElementById('exportButton');
+        exportButton.addEventListener('click', () => {
+            const canvas = document.getElementById('myCanvas');
+            const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Calcular la similitud antes de exportar
+            const similarityScore = this.patternGuide.compareWithGuide(canvas);
+            
+            // Crear un overlay para mostrar los resultados
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.9);
+                color: white;
+                padding: 30px;
+                border-radius: 15px;
+                text-align: center;
+                z-index: 2000;
+                min-width: 300px;
+                box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            `;
+            
+            // Determinar el mensaje y color según la similitud
+            let message, color;
+            if (similarityScore > 80) {
+                message = "¡Excelente trabajo!";
+                color = "#4CAF50";
+            } else if (similarityScore > 50) {
+                message = "¡Buen intento!";
+                color = "#FFC107";
+            } else {
+                message = "Sigue practicando";
+                color = "#FF4444";
+            }
+            
+            overlay.innerHTML = `
+                <h2 style="margin: 0 0 20px 0; color: ${color};">${message}</h2>
+                <div style="margin-bottom: 20px;">
+                    <p style="margin: 10px 0; font-size: 1.1em;">Similitud con el patrón: ${Math.round(similarityScore)}%</p>
+                    <div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
+                        <div>
+                            <p style="margin: 0 0 10px 0;">Tu dibujo:</p>
+                            <img src="${dataURL}" style="max-width: 200px; border-radius: 8px;">
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 10px 0;">Patrón original:</p>
+                            <img src="${this.currentPattern.imageUrl}" style="max-width: 200px; border-radius: 8px;">
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="downloadImage" style="
+                        background: #4CAF50;
+                        color: white;
+                        border: none;
+                        padding: 12px 25px;
+                        border-radius: 8px;
+                        font-size: 1.1em;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">Descargar Imagen</button>
+                    <button id="closeOverlay" style="
+                        background: #666;
+                        color: white;
+                        border: none;
+                        padding: 12px 25px;
+                        border-radius: 8px;
+                        font-size: 1.1em;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">Cerrar</button>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // Agregar eventos a los botones
+            document.getElementById('downloadImage').addEventListener('click', () => {
+                const link = document.createElement('a');
+                link.download = 'latte-art-' + new Date().toISOString().slice(0, 10) + '.jpg';
+                link.href = dataURL;
+                link.click();
+            });
+            
+            document.getElementById('closeOverlay').addEventListener('click', () => {
+                document.body.removeChild(overlay);
+            });
+        });
     }
 } 
