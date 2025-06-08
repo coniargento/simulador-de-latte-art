@@ -642,3 +642,47 @@ input[type="range"]::-webkit-slider-thumb:hover {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   background: rgba(74, 52, 41, 1);
 }
+
+.timer-container {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    background: linear-gradient(135deg, #8B4513 0%, #5D2E0C 100%);
+    padding: 15px 25px;
+    border-radius: 15px;
+    color: #FFF8E7;
+    font-size: 2.2em;
+    font-family: 'Arial', sans-serif;
+    z-index: 1000;
+    border: 3px solid #D4A76A;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.timer-container.hidden {
+    display: none;
+}
+
+#timer-display {
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.timer-container.warning {
+    background: linear-gradient(135deg, #A52A2A 0%, #8B0000 100%);
+}
+
+.timer-container.warning #timer-display {
+    color: #FFD700;
+}
+
+.timer-container.success {
+    background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+}
+
+.timer-container.success #timer-display {
+    color: #4CAF50;
+}

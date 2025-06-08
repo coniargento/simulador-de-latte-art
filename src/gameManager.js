@@ -128,12 +128,22 @@ export class GameManager {
         this.restartButton = document.getElementById('restartButton');
         if (this.restartButton) {
             this.restartButton.classList.add('hidden');
+            
             // Configurar el evento click del botón de reiniciar
             this.restartButton.addEventListener('click', () => {
                 console.log('Botón reiniciar presionado');
                 this.clearCanvas();
                 this.startTutorial();
                 this.patternGuide.setPattern(this.currentPattern);
+                
+                // Reiniciar el temporizador
+                if (this.timerDisplay) {
+                    this.timerDisplay.textContent = '3';
+                }
+                if (this.timerContainer) {
+                    this.timerContainer.classList.remove('hidden');
+                }
+                
                 // Asegurarnos de que el botón permanezca visible
                 this.restartButton.classList.remove('hidden');
             });
@@ -152,6 +162,31 @@ export class GameManager {
         this.setupValidationOverlay();
         this.setupSimilarityDisplay();
         this.setupExportButton();
+
+        // Crear el canvas para los puntos de control
+        this.controlPointsCanvas = document.createElement('canvas');
+        this.controlPointsCanvas.width = this.canvas.width;
+        this.controlPointsCanvas.height = this.canvas.height;
+        this.controlPointsCanvas.style.position = 'absolute';
+        this.controlPointsCanvas.style.top = '0';
+        this.controlPointsCanvas.style.left = '0';
+        this.controlPointsCanvas.style.pointerEvents = 'none';
+        this.canvas.parentElement.appendChild(this.controlPointsCanvas);
+
+        // Inicializar elementos del tutorial
+        this.tutorialOverlay = document.createElement('div');
+        this.tutorialOverlay.className = 'tutorial-overlay';
+        this.tutorialOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            z-index: 1000;
+            pointer-events: none;
+        `;
+        document.body.appendChild(this.tutorialOverlay);
     }
 
     setupPatternButtons() {
@@ -195,27 +230,29 @@ export class GameManager {
     }
 
     setupTimer() {
-        // Timer container
-        const timerContainer = document.createElement('div');
-        timerContainer.id = 'timer-container';
-        timerContainer.style.cssText = `
-            position: fixed;
-            right: 20px;
-            top: 20px;
-            background: rgba(0,0,0,0.8);
-            padding: 15px 25px;
-            border-radius: 10px;
-            color: white;
-            font-size: 2em;
-            font-family: monospace;
-            display: none;
-            z-index: 1000;
-            border: 2px solid rgba(255,255,255,0.3);
-        `;
-        this.timerDisplay = document.createElement('div');
-        this.timerDisplay.textContent = '01:00';
-        timerContainer.appendChild(this.timerDisplay);
-        document.body.appendChild(timerContainer);
+        // Crear el contenedor del temporizador si no existe
+        if (!document.getElementById('timer-container')) {
+            const timerContainer = document.createElement('div');
+            timerContainer.id = 'timer-container';
+            timerContainer.className = 'timer-container hidden';
+            
+            // Agregar icono de café
+            const coffeeIcon = document.createElement('span');
+            coffeeIcon.innerHTML = '☕';
+            coffeeIcon.style.fontSize = '0.9em';
+            timerContainer.appendChild(coffeeIcon);
+            
+            this.timerDisplay = document.createElement('div');
+            this.timerDisplay.id = 'timer-display';
+            this.timerDisplay.textContent = '3';
+            timerContainer.appendChild(this.timerDisplay);
+            
+            document.body.appendChild(timerContainer);
+            this.timerContainer = timerContainer;
+        } else {
+            this.timerContainer = document.getElementById('timer-container');
+            this.timerDisplay = document.getElementById('timer-display');
+        }
     }
 
     setupUI() {
@@ -301,34 +338,6 @@ export class GameManager {
             display: none;
         `;
 
-        // Tutorial overlay
-        this.tutorialOverlay = document.createElement('div');
-        this.tutorialOverlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            z-index: 1000;
-        `;
-
-        this.tutorialHint = document.createElement('div');
-        this.tutorialHint.style.cssText = `
-            position: absolute;
-            background: rgba(255,255,255,0.9);
-            color: black;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 14px;
-            pointer-events: none;
-            transition: all 0.3s ease;
-        `;
-
-        this.tutorialOverlay.appendChild(this.tutorialHint);
-        document.body.appendChild(this.tutorialOverlay);
-
         // Similarity display
         this.similarityDisplay = document.createElement('div');
         this.similarityDisplay.style.cssText = `
@@ -352,23 +361,23 @@ export class GameManager {
     }
 
     clearCanvas() {
-        // Limpiar el canvas
+        // Limpiar el canvas principal
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        // Limpiar la trayectoria
-        this.trajectoryPoints = [];
-        // Limpiar el último checkpoint
-        this.currentCheckpoint = 0;
-        // Limpiar los checkpoints alcanzados
-        this.checkpointsReached = [];
-        // Limpiar el último punto
-        this.lastPosition = null;
-        // Limpiar el puntaje de similitud
-        this.similarityScore = 0;
-        // Actualizar el display de similitud
-        const similarityDisplay = document.querySelector('.similarity-display');
-        if (similarityDisplay) {
-            similarityDisplay.textContent = 'Similitud: 0%';
+        
+        // Limpiar el canvas de puntos de control si existe
+        if (this.controlPointsCanvas) {
+            const controlCtx = this.controlPointsCanvas.getContext('2d');
+            if (controlCtx) {
+                controlCtx.clearRect(0, 0, this.controlPointsCanvas.width, this.controlPointsCanvas.height);
+            }
         }
+        
+        // Reiniciar variables
+        this.isDrawing = false;
+        this.lastX = 0;
+        this.lastY = 0;
+        this.checkpointsReached = [];
+        this.similarityScore = 0;
     }
 
     selectPattern(pattern) {
@@ -460,38 +469,64 @@ export class GameManager {
             // Iniciar el tutorial y mostrar la guía
             this.startTutorial();
             this.patternGuide.setPattern(pattern);
+            
+            // Iniciar el temporizador
+            console.log('Iniciando temporizador...');
+            this.setupTimer(); // Asegurarnos de que el temporizador está configurado
+            this.startTimer(); // Iniciar el temporizador
         };
     }
 
     startTimer() {
-        // Asegurarse de que no haya un temporizador activo
-        if (this.timer) {
-            clearInterval(this.timer);
-            this.timer = null;
-        }
-        
-        // Mostrar el contenedor del temporizador
-        const timerContainer = document.getElementById('timer-container');
-        if (timerContainer) {
-            timerContainer.style.display = 'block';
-        }
+        console.log('Iniciando temporizador');
         
         // Reiniciar el tiempo
         this.timeRemaining = 10;
-        this.isTimerStarted = true;
-        this.updateTimerDisplay();
         
-        // Iniciar el nuevo temporizador
-        this.timer = setInterval(() => {
+        // Mostrar el contenedor del temporizador
+        if (this.timerContainer) {
+            this.timerContainer.classList.remove('hidden', 'warning', 'success');
+            console.log('Temporizador visible');
+        }
+        
+        // Actualizar la visualización inicial
+        if (this.timerDisplay) {
+            this.timerDisplay.textContent = this.timeRemaining;
+            console.log('Tiempo inicial:', this.timeRemaining);
+        }
+        
+        // Limpiar cualquier intervalo existente
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+        }
+        
+        // Iniciar el temporizador
+        this.timerInterval = setInterval(() => {
             this.timeRemaining--;
-            this.updateTimerDisplay();
+            console.log('Tiempo restante:', this.timeRemaining);
+            
+            if (this.timerDisplay) {
+                this.timerDisplay.textContent = this.timeRemaining;
+                
+                // Cambiar color cuando quede poco tiempo
+                if (this.timeRemaining <= 3) {
+                    this.timerContainer.classList.add('warning');
+                } else {
+                    this.timerContainer.classList.remove('warning');
+                }
+            }
             
             if (this.timeRemaining <= 0) {
-                clearInterval(this.timer);
-                this.timer = null;
-                this.isTimerStarted = false;
-                document.getElementById('exportButton').style.display = 'block';
-                this.endTime();
+                clearInterval(this.timerInterval);
+                if (this.timerDisplay) {
+                    this.timerDisplay.textContent = '¡Listo!';
+                }
+                if (this.timerContainer) {
+                    this.timerContainer.classList.remove('warning');
+                    this.timerContainer.classList.add('success');
+                    this.timerContainer.classList.add('hidden');
+                }
+                this.endGame();
             }
         }, 1000);
     }
@@ -502,7 +537,7 @@ export class GameManager {
             this.timer = null;
         }
         this.isTimerStarted = false;
-        document.getElementById('timer-container').style.display = 'none';
+        document.getElementById('timer-container').classList.add('hidden');
     }
 
     endTime() {
@@ -624,27 +659,47 @@ export class GameManager {
         });
     }
 
-    updateTimerDisplay() {
-        const minutes = Math.floor(this.timeRemaining / 60);
-        const seconds = this.timeRemaining % 60;
-        this.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        
-        // Cambiar color cuando quede poco tiempo
-        if (this.timeRemaining <= 10) {
-            this.timerDisplay.style.color = '#ff4444';
-        } else {
-            this.timerDisplay.style.color = 'white';
-        }
-    }
-
     startTutorial() {
-        if (!this.currentPattern) return;
+        console.log('Iniciando tutorial...');
         
-        this.isInTutorial = true;
-        this.currentTutorialStep = 0;
-        this.tutorialOverlay.style.display = 'block';
-        this.tutorialOverlay.style.pointerEvents = 'none'; // Permitir interacción con el canvas
-        this.showTutorialStep();
+        // Configurar el tutorial con driver.js
+        const driver = window.driver;
+        if (!driver) {
+            console.error('Driver.js no está disponible');
+            return;
+        }
+        
+        const driverObj = driver.driver;
+        const steps = [
+            {
+                element: '#myCanvas',
+                popover: {
+                    title: '¡Bienvenido al Tutorial!',
+                    description: 'Aquí es donde dibujarás tu patrón de latte art.',
+                    position: 'center'
+                }
+            },
+            {
+                element: '.mode-selector',
+                popover: {
+                    title: 'Modos de Interacción',
+                    description: 'Elige entre verter leche, revolver o succionar el patrón.',
+                    position: 'bottom'
+                }
+            }
+        ];
+        
+        const driverInstance = driverObj({
+            showProgress: true,
+            steps: steps,
+            animate: true,
+            smoothScroll: true,
+            allowClose: true,
+            stageBackground: 'transparent',
+            overlayColor: 'transparent'
+        });
+        
+        driverInstance.drive();
     }
 
     showTutorialStep() {
@@ -1112,5 +1167,239 @@ export class GameManager {
                 }, 300);
             }
         }, 3000);
+    }
+
+    endGame() {
+        console.log('Finalizando juego');
+        this.isGameActive = false;
+        this.canvasEnabled = false;
+        this.canvas.style.pointerEvents = 'none';
+        
+        // Mostrar el botón de exportar
+        const exportButton = document.getElementById('exportButton');
+        if (exportButton) {
+            exportButton.style.display = 'block';
+        }
+        
+        // Mostrar el análisis
+        this.showAnalysisPopup();
+    }
+
+    showAnalysisPopup() {
+        console.log('Mostrando análisis');
+        
+        // Verificar que tenemos un patrón actual
+        if (!this.currentPattern) {
+            console.error('No hay patrón actual');
+            return;
+        }
+
+        // Crear el panel de análisis
+        const analysisPanel = document.createElement('div');
+        analysisPanel.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #2c3e50 0%, #1a1a1a 100%);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+            z-index: 2000;
+            width: 800px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.1);
+            font-family: 'Arial', sans-serif;
+            transition: all 0.3s ease;
+        `;
+
+        // Calcular estadísticas
+        const totalCheckpoints = this.currentPattern.checkpoints.length;
+        const completedCheckpoints = this.checkpointsReached.length;
+        const checkpointPercentage = (completedCheckpoints / totalCheckpoints) * 100;
+        const similarityScore = Math.round(this.similarityScore);
+
+        // Obtener las imágenes para comparación
+        const originalImage = this.currentPattern.imageUrl;
+        const userDrawing = this.canvas.toDataURL();
+
+        // Crear el contenido del panel
+        analysisPanel.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 25px;">
+                <div style="text-align: center; position: relative;">
+                    <h2 style="margin: 0; color: #fff; font-size: 28px; font-weight: 300; letter-spacing: 1px;">Análisis</h2>
+                    <div style="width: 50px; height: 2px; background: #3498db; margin: 12px auto;"></div>
+                    <button id="closeAnalysis" style="
+                        position: absolute;
+                        top: 0;
+                        right: 0;
+                        background: none;
+                        border: none;
+                        color: #95a5a6;
+                        font-size: 24px;
+                        cursor: pointer;
+                        padding: 5px;
+                        transition: color 0.3s ease;
+                        &:hover {
+                            color: #fff;
+                        }
+                    ">×</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="
+                        background: rgba(255,255,255,0.03);
+                        padding: 20px;
+                        border-radius: 12px;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                        border: 1px solid rgba(255,255,255,0.05);
+                    ">
+                        <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Patrón Original</h3>
+                        <img src="${originalImage}" style="
+                            width: 100%;
+                            border-radius: 8px;
+                            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                        ">
+                    </div>
+                    
+                    <div style="
+                        background: rgba(255,255,255,0.03);
+                        padding: 20px;
+                        border-radius: 12px;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                        border: 1px solid rgba(255,255,255,0.05);
+                    ">
+                        <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Tu Versión</h3>
+                        <img src="${userDrawing}" style="
+                            width: 100%;
+                            border-radius: 8px;
+                            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                        ">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="
+                        background: rgba(255,255,255,0.03);
+                        padding: 20px;
+                        border-radius: 12px;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                        border: 1px solid rgba(255,255,255,0.05);
+                    ">
+                        <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Similitud</h3>
+                        <div style="
+                            font-size: 42px;
+                            text-align: center;
+                            margin: 15px 0;
+                            color: ${this.getSimilarityColor(similarityScore)};
+                            font-weight: 300;
+                        ">
+                            ${similarityScore}%
+                        </div>
+                        <div style="
+                            text-align: center;
+                            color: #95a5a6;
+                            font-size: 14px;
+                            margin-top: 5px;
+                            font-weight: 300;
+                        ">
+                            ${this.getSimilarityMessage(similarityScore)}
+                        </div>
+                    </div>
+
+                    <div style="
+                        background: rgba(255,255,255,0.03);
+                        padding: 20px;
+                        border-radius: 12px;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                        border: 1px solid rgba(255,255,255,0.05);
+                    ">
+                        <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Puntos de Control</h3>
+                        <div style="
+                            font-size: 42px;
+                            text-align: center;
+                            margin: 15px 0;
+                            color: ${this.getCheckpointColor(checkpointPercentage)};
+                            font-weight: 300;
+                        ">
+                            ${completedCheckpoints}/${totalCheckpoints}
+                        </div>
+                        <div style="
+                            text-align: center;
+                            color: #95a5a6;
+                            font-size: 14px;
+                            margin-top: 5px;
+                            font-weight: 300;
+                        ">
+                            ${this.getCheckpointMessage(checkpointPercentage)}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 20px; margin-top: 10px;">
+                    <button id="exportDrawing" style="
+                        padding: 12px 30px;
+                        border: none;
+                        border-radius: 8px;
+                        background: #3498db;
+                        color: white;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        font-size: 16px;
+                        font-weight: 500;
+                        letter-spacing: 1px;
+                        &:hover {
+                            background: #2980b9;
+                        }
+                    ">Exportar Dibujo</button>
+                </div>
+            </div>
+        `;
+
+        // Agregar el panel al documento
+        document.body.appendChild(analysisPanel);
+
+        // Manejar eventos de los botones
+        document.getElementById('exportDrawing').addEventListener('click', () => {
+            this.exportDrawing();
+        });
+
+        document.getElementById('closeAnalysis').addEventListener('click', () => {
+            document.body.removeChild(analysisPanel);
+        });
+    }
+
+    getSimilarityColor(score) {
+        if (score >= 80) return '#4CAF50';
+        if (score >= 50) return '#FFC107';
+        return '#FF5252';
+    }
+
+    getSimilarityMessage(score) {
+        if (score >= 80) return '¡Excelente trabajo! 🎨';
+        if (score >= 50) return '¡Buen intento! 💪';
+        return '¡Sigue practicando! ✨';
+    }
+
+    getCheckpointColor(percentage) {
+        if (percentage >= 80) return '#4CAF50';
+        if (percentage >= 50) return '#FFC107';
+        return '#FF5252';
+    }
+
+    getCheckpointMessage(percentage) {
+        if (percentage >= 80) return '¡Completaste casi todos los puntos! 🎯';
+        if (percentage >= 50) return '¡Más de la mitad completada! 🎯';
+        return '¡Intenta completar más puntos! 🎯';
+    }
+
+    exportDrawing() {
+        // Crear un enlace temporal para descargar el dibujo
+        const link = document.createElement('a');
+        link.download = 'mi-dibujo.png';
+        link.href = this.canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 } 
