@@ -480,13 +480,13 @@ export class GameManager {
     startTimer() {
         console.log('Iniciando temporizador');
         
-        // Reiniciar el tiempo
+        // Reiniciar el tiempo a 10 segundos
         this.timeRemaining = 10;
         
-        // Mostrar el contenedor del temporizador
+        // Asegurar que el temporizador sea visible
         if (this.timerContainer) {
+            this.timerContainer.style.display = 'flex';
             this.timerContainer.classList.remove('hidden', 'warning', 'success');
-            console.log('Temporizador visible');
         }
         
         // Actualizar la visualización inicial
@@ -740,39 +740,76 @@ export class GameManager {
 
     resetPattern() {
         console.log('Reiniciando patrón');
-        
-        // Ocultar el botón de reiniciar
-        if (this.restartButton) {
-            this.restartButton.classList.add('hidden');
-        }
+        this.resetGame();
+    }
+
+    resetGame() {
+        console.log('Reiniciando juego');
         
         // Limpiar el canvas
-        this.clearCanvas();
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Reiniciar variables
-        this.trajectoryPoints = [];
-        this.currentCheckpoint = 0;
+        this.isDrawing = false;
+        this.lastX = 0;
+        this.lastY = 0;
         this.checkpointsReached = [];
-        this.lastPosition = null;
         this.similarityScore = 0;
-        
-        // Reiniciar el timer
-        this.stopTimer();
-        this.timeRemaining = 60;
-        this.updateTimerDisplay();
-        
-        // Reiniciar el tutorial si está activo
-        if (this.isInTutorial) {
-            this.currentTutorialStep = 0;
-            this.showTutorialStep();
-        }
-        
-        // Habilitar el canvas
+        this.isGameActive = true;
         this.canvasEnabled = true;
         this.canvas.style.pointerEvents = 'auto';
         
-        // Iniciar el timer
+        // Ocultar el botón de exportar
+        const exportButton = document.getElementById('exportButton');
+        if (exportButton) {
+            exportButton.style.display = 'none';
+        }
+        
+        // Si no existe el temporizador, crearlo
+        if (!this.timerContainer) {
+            this.timerContainer = document.createElement('div');
+            this.timerContainer.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #8B4513 0%, #654321 100%);
+                padding: 15px 25px;
+                border-radius: 10px;
+                color: #FFE4C4;
+                font-family: 'Arial', sans-serif;
+                font-size: 24px;
+                font-weight: bold;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                border: 2px solid #DAA520;
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                transition: all 0.3s ease;
+            `;
+            
+            // Agregar icono de café
+            const coffeeIcon = document.createElement('span');
+            coffeeIcon.innerHTML = '☕';
+            coffeeIcon.style.fontSize = '24px';
+            this.timerContainer.appendChild(coffeeIcon);
+            
+            // Crear display del temporizador
+            this.timerDisplay = document.createElement('span');
+            this.timerDisplay.textContent = '10';
+            this.timerContainer.appendChild(this.timerDisplay);
+            
+            // Agregar al documento
+            document.body.appendChild(this.timerContainer);
+        }
+        
+        // Iniciar el temporizador
         this.startTimer();
+        
+        // Reiniciar el patrón actual
+        if (this.currentPattern) {
+            this.loadPattern(this.currentPattern);
+        }
     }
 
     getCurrentPattern() {
@@ -1401,5 +1438,18 @@ export class GameManager {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+
+    updateTimerDisplay() {
+        if (this.timerDisplay) {
+            this.timerDisplay.textContent = this.timeRemaining;
+            
+            // Cambiar color cuando quede poco tiempo
+            if (this.timeRemaining <= 3) {
+                this.timerContainer.classList.add('warning');
+            } else {
+                this.timerContainer.classList.remove('warning');
+            }
+        }
     }
 } 
