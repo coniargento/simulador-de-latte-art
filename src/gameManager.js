@@ -4,87 +4,82 @@ export class GameManager {
     constructor(canvas) {
         this.patterns = [
             {
-                id: "heart",
-                name: "Corazón Simple",
-                difficulty: "Principiante",
-                description: "Un corazón básico perfecto para principiantes",
-                imageUrl: "assets/patterns/patron1-corazon.png",
+                id: 'heart',
+                name: 'Corazón Simple',
+                difficulty: 'Principiante',
+                description: 'Un corazón básico perfecto para principiantes',
+                imageUrl: 'assets/patterns/corazon.png',
                 steps: [
-                    "Vierte la leche en el centro hasta llenar 2/3 de la taza",
-                    "Mueve suavemente de lado a lado para crear la base",
-                    "Al final, atraviesa el diseño para crear la punta del corazón"
+                    'Crea la base del corazón con un vertido suave',
+                    'Forma los lóbulos superiores con movimientos circulares',
+                    'Une los lóbulos en la parte inferior',
+                    'Añade detalles finales para dar profundidad'
                 ],
                 checkpoints: [
-                    { x: 0.5, y: 0.8, radius: 0.1, message: "¡Buen comienzo!" },
-                    { x: 0.4, y: 0.6, radius: 0.1, message: "Forma el lado izquierdo" },
-                    { x: 0.6, y: 0.6, radius: 0.1, message: "Forma el lado derecho" },
-                    { x: 0.5, y: 0.3, radius: 0.1, message: "¡Perfecto, terminaste la punta!" }
+                    { message: '¡Comencemos! Dibuja la base del corazón.', position: { x: 0.5, y: 0.5 } },
+                    { message: '¡Bien! Ahora forma los lóbulos superiores.', position: { x: 0.3, y: 0.3 } },
+                    { message: '¡Excelente! Une los lóbulos en la parte inferior.', position: { x: 0.5, y: 0.7 } },
+                    { message: '¡Perfecto! Añade los detalles finales.', position: { x: 0.5, y: 0.5 } }
                 ],
-                tutorial: {
-                    initialPosition: { x: 0.5, y: 0.8 },
-                    path: [
-                        { x: 0.5, y: 0.7, instruction: "Comienza en el centro" },
-                        { x: 0.4, y: 0.6, instruction: "Mueve a la izquierda" },
-                        { x: 0.6, y: 0.5, instruction: "Luego a la derecha" },
-                        { x: 0.5, y: 0.2, instruction: "Finaliza con el tallo" }
-                    ]
-                }
+                tutorial: [
+                    { x: 0.5, y: 0.5 }, // Centro
+                    { x: 0.3, y: 0.3 }, // Lóbulo izquierdo
+                    { x: 0.7, y: 0.3 }, // Lóbulo derecho
+                    { x: 0.5, y: 0.7 }  // Base
+                ]
             },
             {
-                id: "rosetta",
-                name: "Roseta",
-                difficulty: "Intermedio",
-                description: "Una roseta clásica con múltiples capas",
-                imageUrl: "assets/patterns/rosetta.jpg",
+                id: 'rosetta',
+                name: 'Roseta',
+                difficulty: 'Intermedio',
+                description: 'Una elegante roseta con pétalos detallados',
+                imageUrl: 'assets/patterns/rosetta.png',
                 steps: [
-                    "Comienza con un vertido suave en el centro",
-                    "Mueve la jarra de lado a lado creando capas",
-                    "Finaliza con un movimiento rápido hacia adelante"
+                    'Crea el centro de la roseta con un vertido suave',
+                    'Forma los pétalos exteriores con movimientos fluidos',
+                    'Añade detalles a los pétalos para dar profundidad',
+                    'Finaliza con toques finales para dar brillo'
                 ],
                 checkpoints: [
-                    { x: 0.5, y: 0.8, radius: 0.1, message: "¡Buen comienzo!" },
-                    { x: 0.4, y: 0.7, radius: 0.1, message: "Primera capa" },
-                    { x: 0.6, y: 0.6, radius: 0.1, message: "Segunda capa" },
-                    { x: 0.5, y: 0.3, radius: 0.1, message: "¡Perfecto, terminaste el tallo!" }
+                    { message: '¡Comencemos! Dibuja el centro de la roseta.', position: { x: 0.5, y: 0.5 } },
+                    { message: '¡Bien! Ahora forma los pétalos exteriores.', position: { x: 0.3, y: 0.3 } },
+                    { message: '¡Excelente! Añade detalles a los pétalos.', position: { x: 0.7, y: 0.7 } },
+                    { message: '¡Perfecto! Añade los toques finales.', position: { x: 0.5, y: 0.5 } }
                 ],
-                tutorial: {
-                    initialPosition: { x: 0.5, y: 0.8 },
-                    path: [
-                        { x: 0.5, y: 0.7, instruction: "Comienza en el centro" },
-                        { x: 0.4, y: 0.6, instruction: "Mueve a la izquierda" },
-                        { x: 0.6, y: 0.5, instruction: "Luego a la derecha" },
-                        { x: 0.4, y: 0.4, instruction: "Continúa el patrón" },
-                        { x: 0.5, y: 0.2, instruction: "Finaliza con el tallo" }
-                    ]
-                }
+                tutorial: [
+                    { x: 0.5, y: 0.5 }, // Centro
+                    { x: 0.3, y: 0.3 }, // Pétalo superior izquierdo
+                    { x: 0.7, y: 0.3 }, // Pétalo superior derecho
+                    { x: 0.7, y: 0.7 }, // Pétalo inferior derecho
+                    { x: 0.3, y: 0.7 }  // Pétalo inferior izquierdo
+                ]
             },
             {
-                id: "swan",
-                name: "Cisne",
-                difficulty: "Avanzado",
-                description: "Un elegante cisne con detalles finos",
-                imageUrl: "assets/patterns/cisne.webp",
+                id: 'bear',
+                name: 'Oso',
+                difficulty: 'Avanzado',
+                description: 'Un adorable oso con detalles suaves y redondeados',
+                imageUrl: 'assets/patterns/oso.png',
                 steps: [
-                    "Crea la base del cisne con un vertido suave",
-                    "Forma el cuello con movimientos precisos",
-                    "Añade los detalles finales del pico y las alas"
+                    'Crea la base circular para la cara del oso',
+                    'Añade las orejas redondeadas en la parte superior',
+                    'Forma el hocico y la nariz con detalles suaves',
+                    'Finaliza con los ojos y la boca'
                 ],
                 checkpoints: [
-                    { x: 0.5, y: 0.8, radius: 0.1, message: "¡Buen comienzo!" },
-                    { x: 0.4, y: 0.6, radius: 0.1, message: "Forma el cuerpo" },
-                    { x: 0.6, y: 0.5, radius: 0.1, message: "Crea las alas" },
-                    { x: 0.7, y: 0.3, radius: 0.1, message: "¡Perfecto, terminaste el cuello!" }
+                    { message: '¡Comencemos! Dibuja la base de la cara.', position: { x: 0.5, y: 0.5 } },
+                    { message: '¡Bien! Ahora añade las orejas.', position: { x: 0.3, y: 0.3 } },
+                    { message: '¡Excelente! Forma el hocico y la nariz.', position: { x: 0.5, y: 0.6 } },
+                    { message: '¡Perfecto! Añade los detalles finales.', position: { x: 0.5, y: 0.5 } }
                 ],
-                tutorial: {
-                    initialPosition: { x: 0.5, y: 0.8 },
-                    path: [
-                        { x: 0.5, y: 0.6, instruction: "Comienza con la base" },
-                        { x: 0.4, y: 0.5, instruction: "Forma el cuerpo" },
-                        { x: 0.6, y: 0.4, instruction: "Crea las alas" },
-                        { x: 0.7, y: 0.3, instruction: "Dibuja el cuello" },
-                        { x: 0.8, y: 0.2, instruction: "Termina con la cabeza" }
-                    ]
-                }
+                tutorial: [
+                    { x: 0.5, y: 0.5 }, // Centro de la cara
+                    { x: 0.3, y: 0.3 }, // Oreja izquierda
+                    { x: 0.7, y: 0.3 }, // Oreja derecha
+                    { x: 0.5, y: 0.6 }, // Hocico
+                    { x: 0.4, y: 0.5 }, // Ojo izquierdo
+                    { x: 0.6, y: 0.5 }  // Ojo derecho
+                ]
             }
         ];
         
@@ -415,6 +410,12 @@ export class GameManager {
         console.log('Limpiando canvas...');
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
+        // Reinicializar la simulación de fluidos
+        if (typeof init === 'function') {
+            console.log('Reinicializando simulación de fluidos...');
+            init();
+        }
+        
         // Deshabilitar el canvas temporalmente
         this.canvasEnabled = false;
         this.canvas.style.pointerEvents = 'none';
@@ -422,6 +423,12 @@ export class GameManager {
         
         // Actualizar el patrón actual
         this.currentPattern = pattern;
+        
+        // Ocultar la imagen del panel de información
+        this.patternImage.style.display = 'none';
+        
+        // Usar el sistema de guía de patrones
+        this.patternGuide.setPattern(pattern);
         
         // Verificar que el panel existe
         console.log('Panel de información:', this.patternInfoPanel);
@@ -438,10 +445,6 @@ export class GameManager {
             li.textContent = step;
             this.stepsList.appendChild(li);
         });
-        
-        // Actualizar la imagen
-        this.patternImage.src = pattern.imageUrl;
-        this.patternImage.alt = `Patrón ${pattern.name}`;
         
         // Mostrar el panel con una animación suave
         console.log('Mostrando panel de información');
@@ -466,6 +469,8 @@ export class GameManager {
         // Configurar el botón de comenzar
         this.startPatternBtn.onclick = () => {
             console.log('Botón comenzar presionado');
+            // Limpiar la guía cuando se inicia el patrón
+            this.patternGuide.clearGuide();
             this.startPattern();
         };
     }
@@ -824,7 +829,7 @@ export class GameManager {
     showTutorialStep() {
         if (!this.isInTutorial || !this.currentPattern) return;
 
-        const step = this.currentPattern.tutorial.path[this.currentTutorialStep];
+        const step = this.currentPattern.tutorial[this.currentTutorialStep];
         const canvas = document.getElementById('myCanvas');
         const rect = canvas.getBoundingClientRect();
 
@@ -845,7 +850,7 @@ export class GameManager {
         if (!this.isInTutorial || !this.currentPattern) return;
 
         this.currentTutorialStep++;
-        if (this.currentTutorialStep >= this.currentPattern.tutorial.path.length) {
+        if (this.currentTutorialStep >= this.currentPattern.tutorial.length) {
             this.endTutorial();
         } else {
             this.showTutorialStep();
@@ -941,13 +946,13 @@ export class GameManager {
 
     getTutorialStep() {
         if (!this.isInTutorial || !this.currentPattern) return null;
-        return this.currentPattern.tutorial.path[this.currentTutorialStep];
+        return this.currentPattern.tutorial[this.currentTutorialStep];
     }
 
     provideFeedback(mouseX, mouseY) {
         if (!this.isInTutorial || !this.currentPattern) return;
 
-        const currentStep = this.currentPattern.tutorial.path[this.currentTutorialStep];
+        const currentStep = this.currentPattern.tutorial[this.currentTutorialStep];
         const canvas = document.getElementById('myCanvas');
         const rect = canvas.getBoundingClientRect();
 

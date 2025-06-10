@@ -9,14 +9,14 @@ import { config, SIMULATION_MODES } from "./config.js";
 import { AudioManager } from './audioManager.js';
 import { GameManager } from './gameManager.js';
 
-// Configuración del canvas
-const canvas = document.getElementById("myCanvas");
-const size = Math.min(
-  Math.min(window.innerWidth * 0.8, 560),
-  Math.min(window.innerHeight * 0.8, 560)
-);
-canvas.width = size;
-canvas.height = size;
+// Configurar el canvas
+const canvas = document.getElementById('myCanvas');
+const cupSize = Math.min(window.innerWidth * 0.8, 560); // 560px es el tamaño máximo
+canvas.width = cupSize;
+canvas.height = cupSize;
+canvas.style.width = `${cupSize}px`;
+canvas.style.height = `${cupSize}px`;
+document.documentElement.style.setProperty('--cup-size', `${cupSize}px`);
 canvas.focus();
 canvas.style.zIndex = "2";
 
@@ -224,5 +224,4 @@ canvas.addEventListener('mouseleave', () => {
 
 // Ejecutar todo
 setupModeButtons();
-init();
-update();
+init();update();

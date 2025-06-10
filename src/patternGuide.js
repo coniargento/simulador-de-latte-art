@@ -1,96 +1,144 @@
 export class PatternGuide {
     constructor(canvas) {
         this.canvas = canvas;
-        this.setupGuideCanvas();
+        this.guideCanvas = null;
+        this.guideImage = null;
         this.currentPattern = null;
-        this.opacity = 0.3;
-        this.guideImage = new Image();
+        this.opacity = 0.4;
         this.opacityControl = null;
+        this.setupGuideCanvas();
     }
 
     setupGuideCanvas() {
         // Crear un nuevo canvas para la guía
         this.guideCanvas = document.createElement('canvas');
         this.guideCanvas.style.cssText = `
-            position: fixed;
+            position: absolute;
             top: 50%;
-            right: 20px;
-            transform: translateY(-50%);
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: var(--cup-size);
+            height: var(--cup-size);
             pointer-events: none;
             opacity: ${this.opacity};
-            z-index: 1;
-            width: ${this.canvas.width}px;
-            height: ${this.canvas.height}px;
-            outline: none;
-            border: none;
+            z-index: 2;
+            border-radius: 50%;
+            background: transparent;
         `;
+        
+        // Asegurarnos de que el canvas de guía tenga el mismo tamaño que el canvas principal
         this.guideCanvas.width = this.canvas.width;
         this.guideCanvas.height = this.canvas.height;
         
         // Insertar el canvas de guía dentro del contenedor del canvas principal
-        this.canvas.parentElement.insertBefore(this.guideCanvas, this.canvas);
+        const container = this.canvas.parentElement;
+        container.style.position = 'relative';
+        
+        // Asegurarnos de que el canvas principal tenga z-index menor
+        this.canvas.style.zIndex = '1';
+        
+        // Insertar la guía después del canvas principal para que esté por encima
+        container.appendChild(this.guideCanvas);
         
         // Crear el control de opacidad pero no mostrarlo aún
         this.createOpacityControl();
     }
 
     createOpacityControl() {
+        if (this.opacityControl) {
+            this.opacityControl.remove();
+        }
+
         this.opacityControl = document.createElement('div');
         this.opacityControl.style.cssText = `
-            position: fixed;
-            top: 120px;
+            position: absolute;
+            bottom: 20px;
             right: 20px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(255, 255, 255, 0.9);
             padding: 10px;
             border-radius: 5px;
-            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             z-index: 1000;
             display: none;
-            border: 2px solid rgba(255,255,255,0.3);
         `;
-        
-        this.opacityControl.innerHTML = `
-            <label style="display: block; margin-bottom: 5px; text-align: center;">Opacidad</label>
-            <input type="range" min="0" max="100" value="${this.opacity * 100}" 
-                   style="width: 150px;" id="guideOpacity">
-            <span style="display: block; text-align: center; margin-top: 5px;" id="opacityValue">${Math.round(this.opacity * 100)}%</span>
-        `;
-        
-        document.body.appendChild(this.opacityControl);
-        
-        const opacitySlider = document.getElementById('guideOpacity');
-        const opacityValue = document.getElementById('opacityValue');
-        
-        opacitySlider.addEventListener('input', (e) => {
+
+        const label = document.createElement('label');
+        label.textContent = 'Opacidad de la guía: ';
+        label.style.marginRight = '10px';
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.min = '0';
+        slider.max = '100';
+        slider.value = this.opacity * 100;
+        slider.style.width = '100px';
+
+        slider.oninput = (e) => {
             this.opacity = e.target.value / 100;
-            this.guideCanvas.style.opacity = this.opacity;
-            opacityValue.textContent = `${Math.round(this.opacity * 100)}%`;
-        });
+            if (this.guideCanvas) {
+                this.guideCanvas.style.opacity = this.opacity;
+            }
+        };
+
+        this.opacityControl.appendChild(label);
+        this.opacityControl.appendChild(slider);
+        document.body.appendChild(this.opacityControl);
     }
 
     setPattern(pattern) {
+        console.log('Estableciendo patrón:', pattern);
         this.currentPattern = pattern;
-        if (pattern && pattern.imageUrl) {
-            this.guideImage.src = pattern.imageUrl;
-            this.guideImage.onload = () => this.drawGuide();
-            // Mostrar el control de opacidad cuando se selecciona un patrón
-            if (this.opacityControl) {
-                this.opacityControl.style.display = 'block';
-            }
-        } else {
-            this.clearGuide();
-            // Ocultar el control de opacidad cuando no hay patrón
-            if (this.opacityControl) {
-                this.opacityControl.style.display = 'none';
-            }
+        
+        // Limpiar la guía actual
+        this.clearGuide();
+        
+        // Cargar la nueva imagen
+        this.guideImage = new Image();
+        this.guideImage.crossOrigin = 'anonymous';
+        
+        console.log('Cargando imagen:', pattern.imageUrl);
+        
+        this.guideImage.onload = () => {
+            console.log('Imagen cargada exitosamente:', {
+                width: this.guideImage.width,
+                height: this.guideImage.height,
+                src: this.guideImage.src
+            });
+            this.drawGuide();
+        };
+        
+        this.guideImage.onerror = (error) => {
+            console.error('Error al cargar la imagen:', {
+                error: error,
+                src: pattern.imageUrl,
+                pattern: pattern.name
+            });
+        };
+        
+        // Establecer la fuente de la imagen
+        this.guideImage.src = pattern.imageUrl;
+        
+        // Forzar un redibujado inmediato
+        if (this.guideImage.complete) {
+            console.log('Imagen ya estaba cargada, dibujando inmediatamente');
+            this.drawGuide();
         }
     }
 
     drawGuide() {
+        console.log('Dibujando guía');
         const ctx = this.guideCanvas.getContext('2d');
         ctx.clearRect(0, 0, this.guideCanvas.width, this.guideCanvas.height);
         
         if (this.currentPattern && this.guideImage.complete) {
+            console.log('Dibujando imagen:', {
+                pattern: this.currentPattern.name,
+                imageWidth: this.guideImage.width,
+                imageHeight: this.guideImage.height,
+                canvasWidth: this.guideCanvas.width,
+                canvasHeight: this.guideCanvas.height
+            });
+            
             ctx.save();
             // Limpiar cualquier transformación previa
             ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -98,8 +146,8 @@ export class PatternGuide {
             
             // Calcular dimensiones para mantener la proporción
             const scale = Math.min(
-                (this.guideCanvas.width * 0.8) / this.guideImage.width,  // Reducir el ancho al 80%
-                (this.guideCanvas.height * 0.8) / this.guideImage.height  // Reducir el alto al 80%
+                this.guideCanvas.width / this.guideImage.width,
+                this.guideCanvas.height / this.guideImage.height
             );
             
             const width = this.guideImage.width * scale;
@@ -109,16 +157,32 @@ export class PatternGuide {
             const x = (this.guideCanvas.width - width) / 2;
             const y = (this.guideCanvas.height - height) / 2;
             
-            // Dibujar la imagen con un fondo semi-transparente
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.fillRect(x, y, width, height);
-            
+            // Dibujar la imagen
             ctx.drawImage(this.guideImage, x, y, width, height);
             ctx.restore();
+            
+            console.log('Guía dibujada correctamente', {
+                pattern: this.currentPattern.name,
+                canvasWidth: this.guideCanvas.width,
+                canvasHeight: this.guideCanvas.height,
+                imageWidth: width,
+                imageHeight: height,
+                x: x,
+                y: y,
+                scale: scale
+            });
+        } else {
+            console.log('No se pudo dibujar la guía:', {
+                pattern: this.currentPattern?.name,
+                imageComplete: this.guideImage?.complete,
+                hasPattern: !!this.currentPattern,
+                hasImage: !!this.guideImage
+            });
         }
     }
 
     clearGuide() {
+        console.log('Limpiando guía');
         const ctx = this.guideCanvas.getContext('2d');
         ctx.clearRect(0, 0, this.guideCanvas.width, this.guideCanvas.height);
     }
