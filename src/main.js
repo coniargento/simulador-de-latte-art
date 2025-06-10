@@ -163,11 +163,9 @@ function init() {
   interaction.setInteractionHandler(milkInjector);
 }
 
-// Botón de reinicio
-document.getElementById("restartButton").addEventListener("click", () => {
-  init();
-  config.debug.frameNr = 0;
-  gameManager.resetPattern();
+// Configurar el botón de exportar
+document.getElementById("exportButton").addEventListener("click", () => {
+    gameManager.exportDrawing();
 });
 
 // Configura el borde circular

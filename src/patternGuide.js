@@ -4,7 +4,7 @@ export class PatternGuide {
         this.guideCanvas = null;
         this.guideImage = null;
         this.currentPattern = null;
-        this.opacity = 0.4;
+        this.opacity = 0.2;
         this.opacityControl = null;
         this.setupGuideCanvas();
     }

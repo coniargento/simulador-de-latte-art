@@ -120,31 +120,6 @@ export class GameManager {
         this.patternImage = this.patternInfoPanel.querySelector('.pattern-image img');
         this.startPatternBtn = this.patternInfoPanel.querySelector('.start-pattern-btn');
         
-        // Obtener referencia al botón de reiniciar y ocultarlo al inicio
-        this.restartButton = document.getElementById('restartButton');
-        if (this.restartButton) {
-            this.restartButton.classList.add('hidden');
-            
-            // Configurar el evento click del botón de reiniciar
-            this.restartButton.addEventListener('click', () => {
-                console.log('Botón reiniciar presionado');
-                this.clearCanvas();
-                this.startTutorial();
-                this.patternGuide.setPattern(this.currentPattern);
-                
-                // Reiniciar el temporizador
-                if (this.timerDisplay) {
-                    this.timerDisplay.textContent = '3';
-                }
-                if (this.timerContainer) {
-                    this.timerContainer.classList.remove('hidden');
-                }
-                
-                // Asegurarnos de que el botón permanezca visible
-                this.restartButton.classList.remove('hidden');
-            });
-        }
-        
         // Deshabilitar los botones de modo al inicio
         const modeButtons = document.querySelectorAll('.mode-btn');
         modeButtons.forEach(btn => {
@@ -503,11 +478,6 @@ export class GameManager {
         this.isGameActive = true;
         console.log('Canvas habilitado, canvasEnabled:', this.canvasEnabled);
         
-        // Mostrar el botón de reiniciar
-        if (this.restartButton) {
-            this.restartButton.classList.remove('hidden');
-        }
-        
         // Habilitar los botones de modo
         const modeButtons = document.querySelectorAll('.mode-btn');
         modeButtons.forEach(btn => {
@@ -522,7 +492,6 @@ export class GameManager {
         
         // Iniciar el temporizador
         console.log('Iniciando temporizador...');
-        this.setupTimer(); // Asegurarnos de que el temporizador está configurado
         this.startTimer();
     }
 
@@ -554,11 +523,6 @@ export class GameManager {
             this.timerDisplay = null;
         }
         
-        // Desactivar el juego
-        this.isGameActive = false;
-        this.canvasEnabled = false;
-        this.canvas.style.pointerEvents = 'none';
-        
         // Limpiar el canvas
         console.log('Limpiando canvas...');
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -576,17 +540,12 @@ export class GameManager {
             exportButton.style.display = 'none';
         }
 
-        // Ocultar el botón de reiniciar
-        if (this.restartButton) {
-            this.restartButton.classList.add('hidden');
-        }
-
         // Ocultar el análisis si está visible
-        const analysisContainer = document.getElementById('analysisContainer');
-        if (analysisContainer) {
-            analysisContainer.style.display = 'none';
+        const analysisOverlay = document.querySelector('.analysis-overlay');
+        if (analysisOverlay) {
+            analysisOverlay.style.display = 'none';
         }
-
+        
         // Deshabilitar los botones de modo
         const modeButtons = document.querySelectorAll('.mode-btn');
         modeButtons.forEach(btn => {
@@ -1632,12 +1591,6 @@ export class GameManager {
         const startButton = document.getElementById('startButton');
         if (startButton) {
             startButton.style.display = 'block';
-        }
-        
-        // Ocultar el botón de reiniciar
-        const restartButton = document.getElementById('restartButton');
-        if (restartButton) {
-            restartButton.style.display = 'none';
         }
         
         // Ocultar el botón de exportar

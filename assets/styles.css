@@ -325,10 +325,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .value-display {
   display: inline-block;
-  width: 40px;
-  margin-left: 8px;
+  min-width: 40px;
+  text-align: right;
   color: #666;
-  font-size: 0.85em;
 }
 
 #restartButton {
@@ -357,25 +356,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 #exportButton {
   position: fixed;
-  bottom: 80px;
+  bottom: 20px;
   right: 20px;
-  padding: 12px 24px;
-  background: rgba(74, 52, 41, 0.9);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1em;
-  font-weight: 500;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(74, 52, 41, 0.3);
+  padding: 10px 20px;
+  background: #4CAF50;
   color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
   z-index: 1000;
+  display: none;
 }
 
 #exportButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(74, 52, 41, 0.4);
-  background: rgba(74, 52, 41, 1);
+  background: #45a049;
 }
 
 /* Añadir estilo al contenedor del selector de modo */
