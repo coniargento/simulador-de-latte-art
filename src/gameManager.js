@@ -665,19 +665,20 @@ export class GameManager {
         
         // Crear overlay para mostrar los resultados
         const overlay = document.createElement('div');
+        overlay.id = 'overlay';
         overlay.style.cssText = `
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            z-index: 2000;
-            min-width: 300px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
         `;
         
         // Determinar el mensaje y color según la similitud
@@ -694,55 +695,171 @@ export class GameManager {
         }
         
         overlay.innerHTML = `
-            <h2 style="margin: 0 0 20px 0; color: ${color};">${message}</h2>
-            <div style="margin-bottom: 20px;">
-                <p style="margin: 10px 0; font-size: 1.1em;">Similitud con el patrón: ${Math.round(similarityScore)}%</p>
-                <div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
-                    <div>
-                        <p style="margin: 0 0 10px 0;">Tu dibujo:</p>
-                        <img src="${dataURL}" style="max-width: 200px; border-radius: 8px;">
-                    </div>
-                    <div>
-                        <p style="margin: 0 0 10px 0;">Patrón original:</p>
-                        <img src="${this.currentPattern.imageUrl}" style="max-width: 200px; border-radius: 8px;">
+            <div style="
+                background: rgba(255, 255, 255, 0.98);
+                padding: 30px;
+                border-radius: 25px;
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+                max-width: 90%;
+                width: 800px;
+                text-align: center;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 182, 193, 0.3);
+                margin: 20px;
+                font-family: 'Poppins', sans-serif;
+            ">
+                <h2 style="
+                    margin: 0 0 20px 0;
+                    color: #FF69B4;
+                    font-size: 2em;
+                    font-weight: 700;
+                    letter-spacing: 1px;
+                    text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.2);
+                    font-family: 'Poppins', sans-serif;
+                ">${message}</h2>
+                
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 30px;
+                    margin-bottom: 25px;
+                    background: rgba(255, 182, 193, 0.1);
+                    padding: 20px;
+                    border-radius: 20px;
+                ">
+                    <div style="
+                        flex: 1;
+                        text-align: left;
+                    ">
+                        <p style="
+                            margin: 0 0 15px 0;
+                            font-size: 1.3em;
+                            color: #FF69B4;
+                            font-weight: 600;
+                            font-family: 'Poppins', sans-serif;
+                        ">Similitud con el patrón: <span style="
+                            color: ${this.getSimilarityColor(similarityScore)};
+                            font-weight: 700;
+                            font-size: 1.4em;
+                            font-family: 'Poppins', sans-serif;
+                        ">${Math.round(similarityScore)}%</span></p>
+                        
+                        <div style="
+                            display: flex;
+                            gap: 20px;
+                            margin: 20px 0;
+                        ">
+                            <div style="
+                                background: white;
+                                padding: 12px;
+                                border-radius: 15px;
+                                box-shadow: 0 8px 20px rgba(255, 182, 193, 0.2);
+                                border: 1px solid rgba(255, 182, 193, 0.3);
+                                flex: 1;
+                            ">
+                                <p style="
+                                    margin: 0 0 12px 0;
+                                    color: #FF69B4;
+                                    font-weight: 600;
+                                    font-size: 1.1em;
+                                    font-family: 'Poppins', sans-serif;
+                                ">Tu dibujo:</p>
+                                <img src="${dataURL}" style="
+                                    width: 100%;
+                                    max-width: 250px;
+                                    border-radius: 12px;
+                                    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
+                                ">
+                            </div>
+                            
+                            <div style="
+                                background: white;
+                                padding: 12px;
+                                border-radius: 15px;
+                                box-shadow: 0 8px 20px rgba(255, 182, 193, 0.2);
+                                border: 1px solid rgba(255, 182, 193, 0.3);
+                                flex: 1;
+                            ">
+                                <p style="
+                                    margin: 0 0 12px 0;
+                                    color: #FF69B4;
+                                    font-weight: 600;
+                                    font-size: 1.1em;
+                                    font-family: 'Poppins', sans-serif;
+                                ">Patrón original:</p>
+                                <img src="${this.currentPattern.imageUrl}" style="
+                                    width: 100%;
+                                    max-width: 250px;
+                                    border-radius: 12px;
+                                    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
+                                ">
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button id="downloadImage" style="
-                    background: #4CAF50;
-                    color: white;
-                    border: none;
-                    padding: 12px 25px;
-                    border-radius: 8px;
-                    font-size: 1.1em;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                ">Descargar Imagen</button>
-                <button id="playAgain" style="
-                    background: #2196F3;
-                    color: white;
-                    border: none;
-                    padding: 12px 25px;
-                    border-radius: 8px;
-                    font-size: 1.1em;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                ">Jugar de nuevo</button>
-                <button id="closeOverlay" style="
-                    background: #666;
-                    color: white;
-                    border: none;
-                    padding: 12px 25px;
-                    border-radius: 8px;
-                    font-size: 1.1em;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                ">Cerrar</button>
+                
+                <div style="
+                    display: flex;
+                    gap: 12px;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                ">
+                    <button id="downloadImage" style="
+                        background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 20px;
+                        border-radius: 12px;
+                        font-size: 1.1em;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
+                        letter-spacing: 0.5px;
+                        min-width: 150px;
+                        font-family: 'Poppins', sans-serif;
+                    ">Descargar Imagen</button>
+                    
+                    <button id="playAgain" style="
+                        background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 20px;
+                        border-radius: 12px;
+                        font-size: 1.1em;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
+                        letter-spacing: 0.5px;
+                        min-width: 150px;
+                        font-family: 'Poppins', sans-serif;
+                    ">Jugar de nuevo</button>
+                    
+                    <button id="closeOverlay" style="
+                        background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 20px;
+                        border-radius: 12px;
+                        font-size: 1.1em;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
+                        letter-spacing: 0.5px;
+                        min-width: 150px;
+                        font-family: 'Poppins', sans-serif;
+                    ">Cerrar</button>
+                </div>
             </div>
         `;
         
         document.body.appendChild(overlay);
+        // Forzar un reflow
+        overlay.offsetHeight;
+        // Agregar la clase visible
+        overlay.classList.add('visible');
 
         // Agregar evento para el botón de cerrar
         document.getElementById('closeOverlay').addEventListener('click', () => {
@@ -1180,38 +1297,52 @@ export class GameManager {
         const overlay = document.createElement('div');
         overlay.style.cssText = `
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            z-index: 2000;
-            min-width: 300px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
         `;
         
         overlay.innerHTML = `
-            <h2 style="margin: 0 0 20px 0; color: #4CAF50;">¡Patrón Completado!</h2>
-            <div style="margin-bottom: 20px;">
-                <p style="margin: 10px 0; font-size: 1.1em;">Puntuación Base: ${this.score}</p>
-                <p style="margin: 10px 0; font-size: 1.1em;">Bonus por Tiempo: +${timeBonus}</p>
-                <p style="margin: 10px 0; font-size: 1.1em;">Bonus por Similitud: +${similarityBonus}</p>
-                <p style="margin: 15px 0; font-size: 1.3em; color: #4CAF50;">Puntuación Total: ${finalScore}</p>
-                <p style="margin: 10px 0; font-size: 1.1em;">Similitud con el Patrón: ${Math.round(this.similarityScore)}%</p>
+            <div style="
+                background: rgba(255, 255, 255, 0.98);
+                padding: 30px;
+                border-radius: 25px;
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+                max-width: 90%;
+                width: 800px;
+                text-align: center;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 182, 193, 0.3);
+                margin: 20px;
+                font-family: 'Poppins', sans-serif;
+            ">
+                <h2 style="margin: 0 0 20px 0; color: #FF69B4;">¡Patrón Completado!</h2>
+                <div style="margin-bottom: 20px;">
+                    <p style="margin: 10px 0; font-size: 1.1em;">Puntuación Base: ${this.score}</p>
+                    <p style="margin: 10px 0; font-size: 1.1em;">Bonus por Tiempo: +${timeBonus}</p>
+                    <p style="margin: 10px 0; font-size: 1.1em;">Bonus por Similitud: +${similarityBonus}</p>
+                    <p style="margin: 15px 0; font-size: 1.3em; color: #4CAF50;">Puntuación Total: ${finalScore}</p>
+                    <p style="margin: 10px 0; font-size: 1.1em;">Similitud con el Patrón: ${Math.round(this.similarityScore)}%</p>
+                </div>
+                <button onclick="this.parentElement.remove(); location.reload();" style="
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 12px 25px;
+                    border-radius: 8px;
+                    font-size: 1.1em;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">Intentar Otro Patrón</button>
             </div>
-            <button onclick="this.parentElement.remove(); location.reload();" style="
-                background: #4CAF50;
-                color: white;
-                border: none;
-                padding: 12px 25px;
-                border-radius: 8px;
-                font-size: 1.1em;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            ">Intentar Otro Patrón</button>
         `;
         
         document.body.appendChild(overlay);
@@ -1229,19 +1360,20 @@ export class GameManager {
             
             // Crear un overlay para mostrar los resultados
             const overlay = document.createElement('div');
+            overlay.id = 'overlay';
             overlay.style.cssText = `
                 position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0,0,0,0.9);
-                color: white;
-                padding: 30px;
-                border-radius: 15px;
-                text-align: center;
-                z-index: 2000;
-                min-width: 300px;
-                box-shadow: 0 0 20px rgba(0,0,0,0.5);
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: rgba(0, 0, 0, 0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
             `;
             
             // Determinar el mensaje y color según la similitud
@@ -1258,41 +1390,163 @@ export class GameManager {
             }
             
             overlay.innerHTML = `
-                <h2 style="margin: 0 0 20px 0; color: ${color};">${message}</h2>
-                <div style="margin-bottom: 20px;">
-                    <p style="margin: 10px 0; font-size: 1.1em;">Similitud con el patrón: ${Math.round(similarityScore)}%</p>
-                    <div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
-                        <div>
-                            <p style="margin: 0 0 10px 0;">Tu dibujo:</p>
-                            <img src="${dataURL}" style="max-width: 200px; border-radius: 8px;">
-                        </div>
-                        <div>
-                            <p style="margin: 0 0 10px 0;">Patrón original:</p>
-                            <img src="${this.currentPattern.imageUrl}" style="max-width: 200px; border-radius: 8px;">
+                <div style="
+                    background: rgba(255, 255, 255, 0.98);
+                    padding: 30px;
+                    border-radius: 25px;
+                    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+                    max-width: 90%;
+                    width: 800px;
+                    text-align: center;
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 182, 193, 0.3);
+                    margin: 20px;
+                    font-family: 'Poppins', sans-serif;
+                ">
+                    <h2 style="
+                        margin: 0 0 20px 0;
+                        color: #FF69B4;
+                        font-size: 2em;
+                        font-weight: 700;
+                        letter-spacing: 1px;
+                        text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.2);
+                        font-family: 'Poppins', sans-serif;
+                    ">${message}</h2>
+                    
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        gap: 30px;
+                        margin-bottom: 25px;
+                        background: rgba(255, 182, 193, 0.1);
+                        padding: 20px;
+                        border-radius: 20px;
+                    ">
+                        <div style="
+                            flex: 1;
+                            text-align: left;
+                        ">
+                            <p style="
+                                margin: 0 0 15px 0;
+                                font-size: 1.3em;
+                                color: #FF69B4;
+                                font-weight: 600;
+                                font-family: 'Poppins', sans-serif;
+                            ">Similitud con el patrón: <span style="
+                                color: ${this.getSimilarityColor(similarityScore)};
+                                font-weight: 700;
+                                font-size: 1.4em;
+                                font-family: 'Poppins', sans-serif;
+                            ">${Math.round(similarityScore)}%</span></p>
+                            
+                            <div style="
+                                display: flex;
+                                gap: 20px;
+                                margin: 20px 0;
+                            ">
+                                <div style="
+                                    background: white;
+                                    padding: 12px;
+                                    border-radius: 15px;
+                                    box-shadow: 0 8px 20px rgba(255, 182, 193, 0.2);
+                                    border: 1px solid rgba(255, 182, 193, 0.3);
+                                    flex: 1;
+                                ">
+                                    <p style="
+                                        margin: 0 0 12px 0;
+                                        color: #FF69B4;
+                                        font-weight: 600;
+                                        font-size: 1.1em;
+                                        font-family: 'Poppins', sans-serif;
+                                    ">Tu dibujo:</p>
+                                    <img src="${dataURL}" style="
+                                        width: 100%;
+                                        max-width: 250px;
+                                        border-radius: 12px;
+                                        box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
+                                    ">
+                                </div>
+                                
+                                <div style="
+                                    background: white;
+                                    padding: 12px;
+                                    border-radius: 15px;
+                                    box-shadow: 0 8px 20px rgba(255, 182, 193, 0.2);
+                                    border: 1px solid rgba(255, 182, 193, 0.3);
+                                    flex: 1;
+                                ">
+                                    <p style="
+                                        margin: 0 0 12px 0;
+                                        color: #FF69B4;
+                                        font-weight: 600;
+                                        font-size: 1.1em;
+                                        font-family: 'Poppins', sans-serif;
+                                    ">Patrón original:</p>
+                                    <img src="${this.currentPattern.imageUrl}" style="
+                                        width: 100%;
+                                        max-width: 250px;
+                                        border-radius: 12px;
+                                        box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
+                                    ">
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button id="downloadImage" style="
-                        background: #4CAF50;
-                        color: white;
-                        border: none;
-                        padding: 12px 25px;
-                        border-radius: 8px;
-                        font-size: 1.1em;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    ">Descargar Imagen</button>
-                    <button id="closeOverlay" style="
-                        background: #666;
-                        color: white;
-                        border: none;
-                        padding: 12px 25px;
-                        border-radius: 8px;
-                        font-size: 1.1em;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    ">Cerrar</button>
+                    
+                    <div style="
+                        display: flex;
+                        gap: 12px;
+                        justify-content: center;
+                        flex-wrap: wrap;
+                    ">
+                        <button id="downloadImage" style="
+                            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+                            color: white;
+                            border: none;
+                            padding: 12px 20px;
+                            border-radius: 12px;
+                            font-size: 1.1em;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                            box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
+                            letter-spacing: 0.5px;
+                            min-width: 150px;
+                            font-family: 'Poppins', sans-serif;
+                        ">Descargar Imagen</button>
+                        
+                        <button id="playAgain" style="
+                            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+                            color: white;
+                            border: none;
+                            padding: 12px 20px;
+                            border-radius: 12px;
+                            font-size: 1.1em;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                            box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
+                            letter-spacing: 0.5px;
+                            min-width: 150px;
+                            font-family: 'Poppins', sans-serif;
+                        ">Jugar de nuevo</button>
+                        
+                        <button id="closeOverlay" style="
+                            background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%);
+                            color: white;
+                            border: none;
+                            padding: 12px 20px;
+                            border-radius: 12px;
+                            font-size: 1.1em;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                            box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
+                            letter-spacing: 0.5px;
+                            min-width: 150px;
+                            font-family: 'Poppins', sans-serif;
+                        ">Cerrar</button>
+                    </div>
                 </div>
             `;
             
@@ -1379,19 +1633,17 @@ export class GameManager {
         const analysisPanel = document.createElement('div');
         analysisPanel.style.cssText = `
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #2c3e50 0%, #1a1a1a 100%);
-            padding: 30px;
-            border-radius: 15px;
-            color: white;
-            z-index: 2000;
-            width: 800px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            border: 2px solid rgba(255,255,255,0.1);
-            font-family: 'Arial', sans-serif;
-            transition: all 0.3s ease;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
         `;
 
         // Calcular estadísticas
