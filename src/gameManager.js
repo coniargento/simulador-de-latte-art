@@ -381,9 +381,14 @@ export class GameManager {
             this.stopCurrentGame();
         }
         
-        // Limpiar el canvas
+        // Limpiar el canvas completamente
         console.log('Limpiando canvas...');
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.restore();
         
         // Reinicializar la simulación de fluidos
         if (typeof init === 'function') {
@@ -401,6 +406,9 @@ export class GameManager {
         
         // Ocultar la imagen del panel de información
         this.patternImage.style.display = 'none';
+        
+        // Limpiar la guía actual
+        this.patternGuide.clearGuide();
         
         // Usar el sistema de guía de patrones
         this.patternGuide.setPattern(pattern);
@@ -523,9 +531,20 @@ export class GameManager {
             this.timerDisplay = null;
         }
         
-        // Limpiar el canvas
+        // Limpiar el canvas completamente
         console.log('Limpiando canvas...');
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.restore();
+        
+        // Reinicializar la simulación de fluidos
+        if (typeof init === 'function') {
+            console.log('Reinicializando simulación de fluidos...');
+            init();
+        }
         
         // Reiniciar variables
         this.isDrawing = false;
@@ -700,6 +719,16 @@ export class GameManager {
                     cursor: pointer;
                     transition: all 0.3s ease;
                 ">Descargar Imagen</button>
+                <button id="playAgain" style="
+                    background: #2196F3;
+                    color: white;
+                    border: none;
+                    padding: 12px 25px;
+                    border-radius: 8px;
+                    font-size: 1.1em;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">Jugar de nuevo</button>
                 <button id="closeOverlay" style="
                     background: #666;
                     color: white;
@@ -718,8 +747,6 @@ export class GameManager {
         // Agregar evento para el botón de cerrar
         document.getElementById('closeOverlay').addEventListener('click', () => {
             overlay.remove();
-            // Limpiar el canvas para el siguiente patrón
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         });
 
         // Agregar evento para el botón de descargar
@@ -728,6 +755,14 @@ export class GameManager {
             link.download = 'mi-dibujo.jpg';
             link.href = dataURL;
             link.click();
+        });
+
+        // Agregar evento para el botón de jugar de nuevo
+        document.getElementById('playAgain').addEventListener('click', () => {
+            overlay.remove();
+            
+            // Forzar una reinicialización completa
+            window.location.reload();
         });
     }
 
@@ -829,18 +864,42 @@ export class GameManager {
     resetGame() {
         console.log('Reiniciando juego');
         
-        // Limpiar el canvas
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Detener el temporizador si está activo
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
         
-        // Reiniciar variables
+        // Limpiar el canvas completamente
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.restore();
+        
+        // Reinicializar la simulación de fluidos
+        if (typeof init === 'function') {
+            init();
+        }
+        
+        // Reiniciar todas las variables del juego
         this.isDrawing = false;
         this.lastX = 0;
         this.lastY = 0;
         this.checkpointsReached = [];
         this.similarityScore = 0;
-        this.isGameActive = true;
-        this.canvasEnabled = true;
-        this.canvas.style.pointerEvents = 'auto';
+        this.isGameActive = false;
+        this.canvasEnabled = false;
+        this.canvas.style.pointerEvents = 'none';
+        this.timeRemaining = 60;
+        this.isTimerStarted = false;
+        this.isInTutorial = false;
+        this.currentTutorialStep = 0;
+        this.currentCheckpoint = 0;
+        this.score = 0;
+        this.trajectoryPoints = [];
+        this.lastPosition = null;
         
         // Ocultar el botón de exportar
         const exportButton = document.getElementById('exportButton');
@@ -848,50 +907,56 @@ export class GameManager {
             exportButton.style.display = 'none';
         }
         
-        // Si no existe el temporizador, crearlo
-        if (!this.timerContainer) {
-            this.timerContainer = document.createElement('div');
-            this.timerContainer.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: linear-gradient(135deg, #8B4513 0%, #654321 100%);
-                padding: 15px 25px;
-                border-radius: 10px;
-                color: #FFE4C4;
-                font-family: 'Arial', sans-serif;
-                font-size: 24px;
-                font-weight: bold;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                border: 2px solid #DAA520;
-                z-index: 1000;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                transition: all 0.3s ease;
-            `;
-            
-            // Agregar icono de café
-            const coffeeIcon = document.createElement('span');
-            coffeeIcon.innerHTML = '☕';
-            coffeeIcon.style.fontSize = '24px';
-            this.timerContainer.appendChild(coffeeIcon);
-            
-            // Crear display del temporizador
-            this.timerDisplay = document.createElement('span');
-            this.timerDisplay.textContent = '10';
-            this.timerContainer.appendChild(this.timerDisplay);
-            
-            // Agregar al documento
-            document.body.appendChild(this.timerContainer);
+        // Habilitar la selección de patrones
+        this.canSelectPattern = true;
+        const patternButtons = document.querySelectorAll('.pattern-nav-btn');
+        patternButtons.forEach(button => {
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+        });
+
+        // Deshabilitar los botones de modo
+        const modeButtons = document.querySelectorAll('.mode-btn');
+        modeButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        });
+
+        // Limpiar la guía actual
+        if (this.patternGuide) {
+            this.patternGuide.clearGuide();
         }
-        
-        // Iniciar el temporizador
-        this.startTimer();
-        
-        // Reiniciar el patrón actual
-        if (this.currentPattern) {
-            this.loadPattern(this.currentPattern);
+
+        // Limpiar el overlay de validación si existe
+        if (this.validationOverlay) {
+            this.validationOverlay.style.display = 'none';
+        }
+
+        // Limpiar el indicador de progreso si existe
+        if (this.progressIndicator) {
+            this.progressIndicator.style.display = 'none';
+        }
+
+        // Limpiar el indicador de checkpoint si existe
+        if (this.checkpointIndicator) {
+            this.checkpointIndicator.style.display = 'none';
+        }
+
+        // Limpiar el overlay del tutorial si existe
+        if (this.tutorialOverlay) {
+            this.tutorialOverlay.style.display = 'none';
+        }
+
+        // Mostrar el panel de información del patrón
+        if (this.patternInfoPanel) {
+            this.patternInfoPanel.style.display = 'block';
+            setTimeout(() => {
+                this.patternInfoPanel.classList.remove('hidden');
+                this.patternInfoPanel.classList.add('visible');
+                this.patternInfoPanel.style.opacity = '1';
+            }, 50);
         }
     }
 
@@ -1273,10 +1338,6 @@ export class GameManager {
             }, 10);
         }
 
-        // Mostrar el botón de reiniciar
-        if (this.restartButton) {
-            this.restartButton.classList.remove('hidden');
-        }
 
         // Ocultar resultado después de 3 segundos
         setTimeout(() => {
@@ -1575,9 +1636,6 @@ export class GameManager {
             // Dibujar el patrón
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.ctx.drawImage(patternImage, this.patternX, this.patternY, this.patternWidth, this.patternHeight);
-            
-            // Dibujar los puntos de control
-            this.drawCheckpoints();
         };
         patternImage.src = pattern.imageUrl;
         
