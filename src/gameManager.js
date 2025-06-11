@@ -707,7 +707,20 @@ export class GameManager {
                 border: 1px solid rgba(255, 182, 193, 0.3);
                 margin: 20px;
                 font-family: 'Poppins', sans-serif;
+                animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                overflow: hidden;
             ">
+                <div style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 4px;
+                    background: linear-gradient(90deg, #FF69B4, #FFB6C1, #FF69B4);
+                    animation: shimmer 2s infinite;
+                "></div>
+
                 <h2 style="
                     margin: 0 0 20px 0;
                     color: #FF69B4;
@@ -716,6 +729,7 @@ export class GameManager {
                     letter-spacing: 1px;
                     text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.2);
                     font-family: 'Poppins', sans-serif;
+                    animation: fadeIn 0.5s ease-out;
                 ">${message}</h2>
                 
                 <div style="
@@ -726,23 +740,50 @@ export class GameManager {
                     background: rgba(255, 182, 193, 0.1);
                     padding: 20px;
                     border-radius: 20px;
+                    animation: slideUp 0.5s ease-out;
                 ">
                     <div style="
                         flex: 1;
                         text-align: left;
                     ">
-                        <p style="
-                            margin: 0 0 15px 0;
-                            font-size: 1.3em;
-                            color: #FF69B4;
-                            font-weight: 600;
-                            font-family: 'Poppins', sans-serif;
-                        ">Similitud con el patrón: <span style="
-                            color: ${this.getSimilarityColor(similarityScore)};
-                            font-weight: 700;
-                            font-size: 1.4em;
-                            font-family: 'Poppins', sans-serif;
-                        ">${Math.round(similarityScore)}%</span></p>
+                        <div style="
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            margin-bottom: 15px;
+                        ">
+                            <p style="
+                                margin: 0;
+                                font-size: 1.3em;
+                                color: #FF69B4;
+                                font-weight: 600;
+                                font-family: 'Poppins', sans-serif;
+                            ">Similitud con el patrón: <span style="
+                                color: ${this.getSimilarityColor(similarityScore)};
+                                font-weight: 700;
+                                font-size: 1.4em;
+                                font-family: 'Poppins', sans-serif;
+                                animation: pulse 1s infinite;
+                            ">${Math.round(similarityScore)}%</span></p>
+                        </div>
+
+                        <div style="
+                            width: 100%;
+                            height: 8px;
+                            background: rgba(255, 182, 193, 0.2);
+                            border-radius: 4px;
+                            margin: 15px 0;
+                            overflow: hidden;
+                        ">
+                            <div style="
+                                width: ${Math.round(similarityScore)}%;
+                                height: 100%;
+                                background: linear-gradient(90deg, #FF69B4, #FF1493);
+                                border-radius: 4px;
+                                transition: width 1s ease-out;
+                                animation: progress 1s ease-out;
+                            "></div>
+                        </div>
                         
                         <div style="
                             display: flex;
@@ -756,6 +797,8 @@ export class GameManager {
                                 box-shadow: 0 8px 20px rgba(255, 182, 193, 0.2);
                                 border: 1px solid rgba(255, 182, 193, 0.3);
                                 flex: 1;
+                                transition: transform 0.3s ease;
+                                animation: slideIn 0.5s ease-out;
                             ">
                                 <p style="
                                     margin: 0 0 12px 0;
@@ -763,13 +806,17 @@ export class GameManager {
                                     font-weight: 600;
                                     font-size: 1.1em;
                                     font-family: 'Poppins', sans-serif;
-                                ">Tu dibujo:</p>
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                "><span style="font-size: 1.2em;"></span> Tu dibujo:</p>
                                 <img src="${dataURL}" style="
                                     width: 100%;
                                     max-width: 250px;
                                     border-radius: 12px;
                                     box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
-                                ">
+                                    transition: transform 0.3s ease;
+                                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                             </div>
                             
                             <div style="
@@ -779,6 +826,8 @@ export class GameManager {
                                 box-shadow: 0 8px 20px rgba(255, 182, 193, 0.2);
                                 border: 1px solid rgba(255, 182, 193, 0.3);
                                 flex: 1;
+                                transition: transform 0.3s ease;
+                                animation: slideIn 0.5s ease-out 0.2s backwards;
                             ">
                                 <p style="
                                     margin: 0 0 12px 0;
@@ -786,13 +835,17 @@ export class GameManager {
                                     font-weight: 600;
                                     font-size: 1.1em;
                                     font-family: 'Poppins', sans-serif;
-                                ">Patrón original:</p>
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                "><span style="font-size: 1.2em;"></span> Patrón original:</p>
                                 <img src="${this.currentPattern.imageUrl}" style="
                                     width: 100%;
                                     max-width: 250px;
                                     border-radius: 12px;
                                     box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
-                                ">
+                                    transition: transform 0.3s ease;
+                                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                             </div>
                         </div>
                     </div>
@@ -803,6 +856,7 @@ export class GameManager {
                     gap: 12px;
                     justify-content: center;
                     flex-wrap: wrap;
+                    animation: slideUp 0.5s ease-out 0.3s backwards;
                 ">
                     <button id="downloadImage" style="
                         background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
@@ -853,6 +907,60 @@ export class GameManager {
                     ">Cerrar</button>
                 </div>
             </div>
+
+            <style>
+                @keyframes slideIn {
+                    from {
+                        transform: translateY(-20px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes slideUp {
+                    from {
+                        transform: translateY(20px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+
+                @keyframes shimmer {
+                    0% { background-position: -200% 0; }
+                    100% { background-position: 200% 0; }
+                }
+
+                @keyframes pulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.05); }
+                    100% { transform: scale(1); }
+                }
+
+                @keyframes progress {
+                    from { width: 0; }
+                    to { width: ${Math.round(similarityScore)}%; }
+                }
+
+                button:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.4);
+                }
+
+                button:active {
+                    transform: translateY(1px);
+                }
+            </style>
         `;
         
         document.body.appendChild(overlay);
@@ -1402,7 +1510,20 @@ export class GameManager {
                     border: 1px solid rgba(255, 182, 193, 0.3);
                     margin: 20px;
                     font-family: 'Poppins', sans-serif;
+                    animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                    overflow: hidden;
                 ">
+                    <div style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        height: 4px;
+                        background: linear-gradient(90deg, #FF69B4, #FFB6C1, #FF69B4);
+                        animation: shimmer 2s infinite;
+                    "></div>
+
                     <h2 style="
                         margin: 0 0 20px 0;
                         color: #FF69B4;
@@ -1411,6 +1532,7 @@ export class GameManager {
                         letter-spacing: 1px;
                         text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.2);
                         font-family: 'Poppins', sans-serif;
+                        animation: fadeIn 0.5s ease-out;
                     ">${message}</h2>
                     
                     <div style="
@@ -1421,23 +1543,50 @@ export class GameManager {
                         background: rgba(255, 182, 193, 0.1);
                         padding: 20px;
                         border-radius: 20px;
+                        animation: slideUp 0.5s ease-out;
                     ">
                         <div style="
                             flex: 1;
                             text-align: left;
                         ">
-                            <p style="
-                                margin: 0 0 15px 0;
-                                font-size: 1.3em;
-                                color: #FF69B4;
-                                font-weight: 600;
-                                font-family: 'Poppins', sans-serif;
-                            ">Similitud con el patrón: <span style="
-                                color: ${this.getSimilarityColor(similarityScore)};
-                                font-weight: 700;
-                                font-size: 1.4em;
-                                font-family: 'Poppins', sans-serif;
-                            ">${Math.round(similarityScore)}%</span></p>
+                            <div style="
+                                display: flex;
+                                align-items: center;
+                                gap: 10px;
+                                margin-bottom: 15px;
+                            ">
+                                <p style="
+                                    margin: 0;
+                                    font-size: 1.3em;
+                                    color: #FF69B4;
+                                    font-weight: 600;
+                                    font-family: 'Poppins', sans-serif;
+                                ">Similitud con el patrón: <span style="
+                                    color: ${this.getSimilarityColor(similarityScore)};
+                                    font-weight: 700;
+                                    font-size: 1.4em;
+                                    font-family: 'Poppins', sans-serif;
+                                    animation: pulse 1s infinite;
+                                ">${Math.round(similarityScore)}%</span></p>
+                            </div>
+
+                            <div style="
+                                width: 100%;
+                                height: 8px;
+                                background: rgba(255, 182, 193, 0.2);
+                                border-radius: 4px;
+                                margin: 15px 0;
+                                overflow: hidden;
+                            ">
+                                <div style="
+                                    width: ${Math.round(similarityScore)}%;
+                                    height: 100%;
+                                    background: linear-gradient(90deg, #FF69B4, #FF1493);
+                                    border-radius: 4px;
+                                    transition: width 1s ease-out;
+                                    animation: progress 1s ease-out;
+                                "></div>
+                            </div>
                             
                             <div style="
                                 display: flex;
@@ -1451,6 +1600,8 @@ export class GameManager {
                                     box-shadow: 0 8px 20px rgba(255, 182, 193, 0.2);
                                     border: 1px solid rgba(255, 182, 193, 0.3);
                                     flex: 1;
+                                    transition: transform 0.3s ease;
+                                    animation: slideIn 0.5s ease-out;
                                 ">
                                     <p style="
                                         margin: 0 0 12px 0;
@@ -1458,13 +1609,17 @@ export class GameManager {
                                         font-weight: 600;
                                         font-size: 1.1em;
                                         font-family: 'Poppins', sans-serif;
-                                    ">Tu dibujo:</p>
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 8px;
+                                    "><span style="font-size: 1.2em;">🎨</span> Tu dibujo:</p>
                                     <img src="${dataURL}" style="
                                         width: 100%;
                                         max-width: 250px;
                                         border-radius: 12px;
                                         box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
-                                    ">
+                                        transition: transform 0.3s ease;
+                                    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                                 </div>
                                 
                                 <div style="
@@ -1474,6 +1629,8 @@ export class GameManager {
                                     box-shadow: 0 8px 20px rgba(255, 182, 193, 0.2);
                                     border: 1px solid rgba(255, 182, 193, 0.3);
                                     flex: 1;
+                                    transition: transform 0.3s ease;
+                                    animation: slideIn 0.5s ease-out 0.2s backwards;
                                 ">
                                     <p style="
                                         margin: 0 0 12px 0;
@@ -1481,13 +1638,17 @@ export class GameManager {
                                         font-weight: 600;
                                         font-size: 1.1em;
                                         font-family: 'Poppins', sans-serif;
-                                    ">Patrón original:</p>
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 8px;
+                                    "><span style="font-size: 1.2em;">✨</span> Patrón original:</p>
                                     <img src="${this.currentPattern.imageUrl}" style="
                                         width: 100%;
                                         max-width: 250px;
                                         border-radius: 12px;
                                         box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
-                                    ">
+                                        transition: transform 0.3s ease;
+                                    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                                 </div>
                             </div>
                         </div>
@@ -1498,6 +1659,7 @@ export class GameManager {
                         gap: 12px;
                         justify-content: center;
                         flex-wrap: wrap;
+                        animation: slideUp 0.5s ease-out 0.3s backwards;
                     ">
                         <button id="downloadImage" style="
                             background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
@@ -1548,6 +1710,60 @@ export class GameManager {
                         ">Cerrar</button>
                     </div>
                 </div>
+
+                <style>
+                    @keyframes slideIn {
+                        from {
+                            transform: translateY(-20px);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateY(0);
+                            opacity: 1;
+                        }
+                    }
+
+                    @keyframes slideUp {
+                        from {
+                            transform: translateY(20px);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateY(0);
+                            opacity: 1;
+                        }
+                    }
+
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+
+                    @keyframes shimmer {
+                        0% { background-position: -200% 0; }
+                        100% { background-position: 200% 0; }
+                    }
+
+                    @keyframes pulse {
+                        0% { transform: scale(1); }
+                        50% { transform: scale(1.05); }
+                        100% { transform: scale(1); }
+                    }
+
+                    @keyframes progress {
+                        from { width: 0; }
+                        to { width: ${Math.round(similarityScore)}%; }
+                    }
+
+                    button:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 8px 25px rgba(255, 105, 180, 0.4);
+                    }
+
+                    button:active {
+                        transform: translateY(1px);
+                    }
+                </style>
             `;
             
             document.body.appendChild(overlay);
