@@ -889,22 +889,6 @@ export class GameManager {
                         min-width: 150px;
                         font-family: 'Poppins', sans-serif;
                     ">Jugar de nuevo</button>
-                    
-                    <button id="closeOverlay" style="
-                        background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%);
-                        color: white;
-                        border: none;
-                        padding: 12px 20px;
-                        border-radius: 12px;
-                        font-size: 1.1em;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
-                        letter-spacing: 0.5px;
-                        min-width: 150px;
-                        font-family: 'Poppins', sans-serif;
-                    ">Cerrar</button>
                 </div>
             </div>
 
@@ -968,11 +952,6 @@ export class GameManager {
         overlay.offsetHeight;
         // Agregar la clase visible
         overlay.classList.add('visible');
-
-        // Agregar evento para el botón de cerrar
-        document.getElementById('closeOverlay').addEventListener('click', () => {
-            overlay.remove();
-        });
 
         // Agregar evento para el botón de descargar
         document.getElementById('downloadImage').addEventListener('click', () => {
@@ -1417,43 +1396,122 @@ export class GameManager {
             align-items: center;
             z-index: 9999;
         `;
+
+        // Crear el contenido del panel
+        const contentDiv = document.createElement('div');
+        contentDiv.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        `;
         
-        overlay.innerHTML = `
+        contentDiv.innerHTML = `
+            <div style="text-align: center; position: relative;">
+                <h2 style="margin: 0; color: #fff; font-size: 28px; font-weight: 300; letter-spacing: 1px;">¡Patrón Completado!</h2>
+                <div style="width: 50px; height: 2px; background: #3498db; margin: 12px auto;"></div>
+            </div>
+
             <div style="
-                background: rgba(255, 255, 255, 0.98);
-                padding: 30px;
-                border-radius: 25px;
-                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-                max-width: 90%;
-                width: 800px;
-                text-align: center;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 182, 193, 0.3);
-                margin: 20px;
-                font-family: 'Poppins', sans-serif;
+                background: rgba(255,255,255,0.03);
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                border: 1px solid rgba(255,255,255,0.05);
             ">
-                <h2 style="margin: 0 0 20px 0; color: #FF69B4;">¡Patrón Completado!</h2>
-                <div style="margin-bottom: 20px;">
-                    <p style="margin: 10px 0; font-size: 1.1em;">Puntuación Base: ${this.score}</p>
-                    <p style="margin: 10px 0; font-size: 1.1em;">Bonus por Tiempo: +${timeBonus}</p>
-                    <p style="margin: 10px 0; font-size: 1.1em;">Bonus por Similitud: +${similarityBonus}</p>
-                    <p style="margin: 15px 0; font-size: 1.3em; color: #4CAF50;">Puntuación Total: ${finalScore}</p>
-                    <p style="margin: 10px 0; font-size: 1.1em;">Similitud con el Patrón: ${Math.round(this.similarityScore)}%</p>
+                <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Puntuación</h3>
+                <div style="
+                    font-size: 42px;
+                    text-align: center;
+                    margin: 15px 0;
+                    color: #4CAF50;
+                    font-weight: 300;
+                ">
+                    ${finalScore}
                 </div>
-                <button onclick="this.parentElement.remove(); location.reload();" style="
-                    background: #4CAF50;
-                    color: white;
+                <div style="
+                    text-align: center;
+                    color: #95a5a6;
+                    font-size: 14px;
+                    margin-top: 5px;
+                    font-weight: 300;
+                ">
+                    Puntuación Base: ${this.score}<br>
+                    Bonus por Tiempo: +${timeBonus}<br>
+                    Bonus por Similitud: +${similarityBonus}
+                </div>
+            </div>
+
+            <div style="
+                background: rgba(255,255,255,0.03);
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                border: 1px solid rgba(255,255,255,0.05);
+            ">
+                <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Similitud</h3>
+                <div style="
+                    font-size: 42px;
+                    text-align: center;
+                    margin: 15px 0;
+                    color: ${this.getSimilarityColor(this.similarityScore)};
+                    font-weight: 300;
+                ">
+                    ${Math.round(this.similarityScore)}%
+                </div>
+                <div style="
+                    text-align: center;
+                    color: #95a5a6;
+                    font-size: 14px;
+                    margin-top: 5px;
+                    font-weight: 300;
+                ">
+                    ${this.getSimilarityMessage(this.similarityScore)}
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 10px;">
+                <button id="tryAgain" style="
+                    padding: 12px 30px;
                     border: none;
-                    padding: 12px 25px;
                     border-radius: 8px;
-                    font-size: 1.1em;
+                    background: #3498db;
+                    color: white;
                     cursor: pointer;
                     transition: all 0.3s ease;
+                    font-size: 16px;
+                    font-weight: 500;
+                    letter-spacing: 1px;
+                    &:hover {
+                        background: #2980b9;
+                    }
                 ">Intentar Otro Patrón</button>
             </div>
         `;
+
+        // Agregar el contenido al panel
+        overlay.appendChild(contentDiv);
         
+        // Agregar el panel al documento
         document.body.appendChild(overlay);
+
+        // Manejar eventos de los botones
+        document.getElementById('tryAgain').addEventListener('click', () => {
+            location.reload();
+        });
+
+        // Cerrar al hacer clic fuera del contenido
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+            }
+        });
+
         this.stopTimer();
     }
 
@@ -1468,7 +1526,6 @@ export class GameManager {
             
             // Crear un overlay para mostrar los resultados
             const overlay = document.createElement('div');
-            overlay.id = 'overlay';
             overlay.style.cssText = `
                 position: fixed;
                 top: 0;
@@ -1482,6 +1539,20 @@ export class GameManager {
                 justify-content: center;
                 align-items: center;
                 z-index: 9999;
+            `;
+
+            // Crear el contenido del panel
+            const contentDiv = document.createElement('div');
+            contentDiv.style.cssText = `
+                display: flex;
+                flex-direction: column;
+                gap: 25px;
+                background: rgba(0, 0, 0, 0.9);
+                padding: 30px;
+                border-radius: 15px;
+                max-width: 90%;
+                max-height: 90vh;
+                overflow-y: auto;
             `;
             
             // Determinar el mensaje y color según la similitud
@@ -1497,287 +1568,75 @@ export class GameManager {
                 color = "#FF4444";
             }
             
-            overlay.innerHTML = `
+            contentDiv.innerHTML = `
+                <div style="text-align: center; position: relative;">
+                    <h2 style="margin: 0; color: #fff; font-size: 28px; font-weight: 300; letter-spacing: 1px;">${message}</h2>
+                    <div style="width: 50px; height: 2px; background: #3498db; margin: 12px auto;"></div>
+                </div>
+
                 <div style="
-                    background: rgba(255, 255, 255, 0.98);
-                    padding: 30px;
-                    border-radius: 25px;
-                    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-                    max-width: 90%;
-                    width: 800px;
-                    text-align: center;
-                    backdrop-filter: blur(10px);
-                    border: 1px solid rgba(255, 182, 193, 0.3);
-                    margin: 20px;
-                    font-family: 'Poppins', sans-serif;
-                    animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-                    position: relative;
-                    overflow: hidden;
+                    background: rgba(255,255,255,0.03);
+                    padding: 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                    border: 1px solid rgba(255,255,255,0.05);
                 ">
+                    <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Similitud con el patrón</h3>
                     <div style="
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        height: 4px;
-                        background: linear-gradient(90deg, #FF69B4, #FFB6C1, #FF69B4);
-                        animation: shimmer 2s infinite;
-                    "></div>
-
-                    <h2 style="
-                        margin: 0 0 20px 0;
-                        color: #FF69B4;
-                        font-size: 2em;
-                        font-weight: 700;
-                        letter-spacing: 1px;
-                        text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.2);
-                        font-family: 'Poppins', sans-serif;
-                        animation: fadeIn 0.5s ease-out;
-                    ">${message}</h2>
-                    
-                    <div style="
-                        display: flex;
-                        align-items: center;
-                        gap: 30px;
-                        margin-bottom: 25px;
-                        background: rgba(255, 182, 193, 0.1);
-                        padding: 20px;
-                        border-radius: 20px;
-                        animation: slideUp 0.5s ease-out;
+                        font-size: 42px;
+                        text-align: center;
+                        margin: 15px 0;
+                        color: ${this.getSimilarityColor(similarityScore)};
+                        font-weight: 300;
                     ">
-                        <div style="
-                            flex: 1;
-                            text-align: left;
-                        ">
-                            <div style="
-                                display: flex;
-                                align-items: center;
-                                gap: 10px;
-                                margin-bottom: 15px;
-                            ">
-                                <p style="
-                                    margin: 0;
-                                    font-size: 1.3em;
-                                    color: #FF69B4;
-                                    font-weight: 600;
-                                    font-family: 'Poppins', sans-serif;
-                                ">Similitud con el patrón: <span style="
-                                    color: ${this.getSimilarityColor(similarityScore)};
-                                    font-weight: 700;
-                                    font-size: 1.4em;
-                                    font-family: 'Poppins', sans-serif;
-                                    animation: pulse 1s infinite;
-                                ">${Math.round(similarityScore)}%</span></p>
-                            </div>
-
-                            <div style="
-                                width: 100%;
-                                height: 8px;
-                                background: rgba(255, 182, 193, 0.2);
-                                border-radius: 4px;
-                                margin: 15px 0;
-                                overflow: hidden;
-                            ">
-                                <div style="
-                                    width: ${Math.round(similarityScore)}%;
-                                    height: 100%;
-                                    background: linear-gradient(90deg, #FF69B4, #FF1493);
-                                    border-radius: 4px;
-                                    transition: width 1s ease-out;
-                                    animation: progress 1s ease-out;
-                                "></div>
-                            </div>
-                            
-                            <div style="
-                                display: flex;
-                                gap: 20px;
-                                margin: 20px 0;
-                            ">
-                                <div style="
-                                    background: white;
-                                    padding: 12px;
-                                    border-radius: 15px;
-                                    box-shadow: 0 8px 20px rgba(255, 182, 193, 0.2);
-                                    border: 1px solid rgba(255, 182, 193, 0.3);
-                                    flex: 1;
-                                    transition: transform 0.3s ease;
-                                    animation: slideIn 0.5s ease-out;
-                                ">
-                                    <p style="
-                                        margin: 0 0 12px 0;
-                                        color: #FF69B4;
-                                        font-weight: 600;
-                                        font-size: 1.1em;
-                                        font-family: 'Poppins', sans-serif;
-                                        display: flex;
-                                        align-items: center;
-                                        gap: 8px;
-                                    "><span style="font-size: 1.2em;">🎨</span> Tu dibujo:</p>
-                                    <img src="${dataURL}" style="
-                                        width: 100%;
-                                        max-width: 250px;
-                                        border-radius: 12px;
-                                        box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
-                                        transition: transform 0.3s ease;
-                                    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                                </div>
-                                
-                                <div style="
-                                    background: white;
-                                    padding: 12px;
-                                    border-radius: 15px;
-                                    box-shadow: 0 8px 20px rgba(255, 182, 193, 0.2);
-                                    border: 1px solid rgba(255, 182, 193, 0.3);
-                                    flex: 1;
-                                    transition: transform 0.3s ease;
-                                    animation: slideIn 0.5s ease-out 0.2s backwards;
-                                ">
-                                    <p style="
-                                        margin: 0 0 12px 0;
-                                        color: #FF69B4;
-                                        font-weight: 600;
-                                        font-size: 1.1em;
-                                        font-family: 'Poppins', sans-serif;
-                                        display: flex;
-                                        align-items: center;
-                                        gap: 8px;
-                                    "><span style="font-size: 1.2em;">✨</span> Patrón original:</p>
-                                    <img src="${this.currentPattern.imageUrl}" style="
-                                        width: 100%;
-                                        max-width: 250px;
-                                        border-radius: 12px;
-                                        box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
-                                        transition: transform 0.3s ease;
-                                    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                                </div>
-                            </div>
-                        </div>
+                        ${Math.round(similarityScore)}%
                     </div>
-                    
                     <div style="
-                        display: flex;
-                        gap: 12px;
-                        justify-content: center;
-                        flex-wrap: wrap;
-                        animation: slideUp 0.5s ease-out 0.3s backwards;
+                        text-align: center;
+                        color: #95a5a6;
+                        font-size: 14px;
+                        margin-top: 5px;
+                        font-weight: 300;
                     ">
-                        <button id="downloadImage" style="
-                            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
-                            color: white;
-                            border: none;
-                            padding: 12px 20px;
-                            border-radius: 12px;
-                            font-size: 1.1em;
-                            font-weight: 600;
-                            cursor: pointer;
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                            box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
-                            letter-spacing: 0.5px;
-                            min-width: 150px;
-                            font-family: 'Poppins', sans-serif;
-                        ">Descargar Imagen</button>
-                        
-                        <button id="playAgain" style="
-                            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
-                            color: white;
-                            border: none;
-                            padding: 12px 20px;
-                            border-radius: 12px;
-                            font-size: 1.1em;
-                            font-weight: 600;
-                            cursor: pointer;
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                            box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
-                            letter-spacing: 0.5px;
-                            min-width: 150px;
-                            font-family: 'Poppins', sans-serif;
-                        ">Jugar de nuevo</button>
-                        
-                        <button id="closeOverlay" style="
-                            background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%);
-                            color: white;
-                            border: none;
-                            padding: 12px 20px;
-                            border-radius: 12px;
-                            font-size: 1.1em;
-                            font-weight: 600;
-                            cursor: pointer;
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                            box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
-                            letter-spacing: 0.5px;
-                            min-width: 150px;
-                            font-family: 'Poppins', sans-serif;
-                        ">Cerrar</button>
+                        ${this.getSimilarityMessage(similarityScore)}
                     </div>
                 </div>
 
-                <style>
-                    @keyframes slideIn {
-                        from {
-                            transform: translateY(-20px);
-                            opacity: 0;
+                <div style="display: flex; justify-content: center; gap: 20px; margin-top: 10px;">
+                    <button id="exportDrawing" style="
+                        padding: 12px 30px;
+                        border: none;
+                        border-radius: 8px;
+                        background: #3498db;
+                        color: white;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        font-size: 16px;
+                        font-weight: 500;
+                        letter-spacing: 1px;
+                        &:hover {
+                            background: #2980b9;
                         }
-                        to {
-                            transform: translateY(0);
-                            opacity: 1;
-                        }
-                    }
-
-                    @keyframes slideUp {
-                        from {
-                            transform: translateY(20px);
-                            opacity: 0;
-                        }
-                        to {
-                            transform: translateY(0);
-                            opacity: 1;
-                        }
-                    }
-
-                    @keyframes fadeIn {
-                        from { opacity: 0; }
-                        to { opacity: 1; }
-                    }
-
-                    @keyframes shimmer {
-                        0% { background-position: -200% 0; }
-                        100% { background-position: 200% 0; }
-                    }
-
-                    @keyframes pulse {
-                        0% { transform: scale(1); }
-                        50% { transform: scale(1.05); }
-                        100% { transform: scale(1); }
-                    }
-
-                    @keyframes progress {
-                        from { width: 0; }
-                        to { width: ${Math.round(similarityScore)}%; }
-                    }
-
-                    button:hover {
-                        transform: translateY(-2px);
-                        box-shadow: 0 8px 25px rgba(255, 105, 180, 0.4);
-                    }
-
-                    button:active {
-                        transform: translateY(1px);
-                    }
-                </style>
+                    ">Exportar Dibujo</button>
+                </div>
             `;
+
+            // Agregar el contenido al panel
+            overlay.appendChild(contentDiv);
             
+            // Agregar el panel al documento
             document.body.appendChild(overlay);
-            
-            // Agregar eventos a los botones
-            document.getElementById('downloadImage').addEventListener('click', () => {
-                const link = document.createElement('a');
-                link.download = 'latte-art-' + new Date().toISOString().slice(0, 10) + '.jpg';
-                link.href = dataURL;
-                link.click();
+
+            // Manejar eventos de los botones
+            document.getElementById('exportDrawing').addEventListener('click', () => {
+                this.exportDrawing();
             });
-            
-            document.getElementById('closeOverlay').addEventListener('click', () => {
-                document.body.removeChild(overlay);
+
+            // Cerrar al hacer clic fuera del contenido
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    document.body.removeChild(overlay);
+                }
             });
         });
     }
@@ -1873,137 +1732,136 @@ export class GameManager {
         const userDrawing = this.canvas.toDataURL();
 
         // Crear el contenido del panel
-        analysisPanel.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 25px;">
-                <div style="text-align: center; position: relative;">
-                    <h2 style="margin: 0; color: #fff; font-size: 28px; font-weight: 300; letter-spacing: 1px;">Análisis</h2>
-                    <div style="width: 50px; height: 2px; background: #3498db; margin: 12px auto;"></div>
-                    <button id="closeAnalysis" style="
-                        position: absolute;
-                        top: 0;
-                        right: 0;
-                        background: none;
-                        border: none;
-                        color: #95a5a6;
-                        font-size: 24px;
-                        cursor: pointer;
-                        padding: 5px;
-                        transition: color 0.3s ease;
-                        &:hover {
-                            color: #fff;
-                        }
-                    ">×</button>
+        const contentDiv = document.createElement('div');
+        contentDiv.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        `;
+
+        contentDiv.innerHTML = `
+            <div style="text-align: center; position: relative;">
+                <h2 style="margin: 0; color: #fff; font-size: 28px; font-weight: 300; letter-spacing: 1px;">Análisis</h2>
+                <div style="width: 50px; height: 2px; background: #3498db; margin: 12px auto;"></div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div style="
+                    background: rgba(255,255,255,0.03);
+                    padding: 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                    border: 1px solid rgba(255,255,255,0.05);
+                ">
+                    <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Patrón Original</h3>
+                    <img src="${originalImage}" style="
+                        width: 100%;
+                        border-radius: 8px;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    ">
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div style="
-                        background: rgba(255,255,255,0.03);
-                        padding: 20px;
-                        border-radius: 12px;
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                        border: 1px solid rgba(255,255,255,0.05);
-                    ">
-                        <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Patrón Original</h3>
-                        <img src="${originalImage}" style="
-                            width: 100%;
-                            border-radius: 8px;
-                            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                        ">
-                    </div>
-                    
-                    <div style="
-                        background: rgba(255,255,255,0.03);
-                        padding: 20px;
-                        border-radius: 12px;
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                        border: 1px solid rgba(255,255,255,0.05);
-                    ">
-                        <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Tu Versión</h3>
-                        <img src="${userDrawing}" style="
-                            width: 100%;
-                            border-radius: 8px;
-                            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                        ">
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div style="
-                        background: rgba(255,255,255,0.03);
-                        padding: 20px;
-                        border-radius: 12px;
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                        border: 1px solid rgba(255,255,255,0.05);
-                    ">
-                        <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Similitud</h3>
-                        <div style="
-                            font-size: 42px;
-                            text-align: center;
-                            margin: 15px 0;
-                            color: ${this.getSimilarityColor(similarityScore)};
-                            font-weight: 300;
-                        ">
-                            ${similarityScore}%
-                        </div>
-                        <div style="
-                            text-align: center;
-                            color: #95a5a6;
-                            font-size: 14px;
-                            margin-top: 5px;
-                            font-weight: 300;
-                        ">
-                            ${this.getSimilarityMessage(similarityScore)}
-                        </div>
-                    </div>
-
-                    <div style="
-                        background: rgba(255,255,255,0.03);
-                        padding: 20px;
-                        border-radius: 12px;
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                        border: 1px solid rgba(255,255,255,0.05);
-                    ">
-                        <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Puntos de Control</h3>
-                        <div style="
-                            font-size: 42px;
-                            text-align: center;
-                            margin: 15px 0;
-                            color: ${this.getCheckpointColor(checkpointPercentage)};
-                            font-weight: 300;
-                        ">
-                            ${completedCheckpoints}/${totalCheckpoints}
-                        </div>
-                        <div style="
-                            text-align: center;
-                            color: #95a5a6;
-                            font-size: 14px;
-                            margin-top: 5px;
-                            font-weight: 300;
-                        ">
-                            ${this.getCheckpointMessage(checkpointPercentage)}
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display: flex; justify-content: center; gap: 20px; margin-top: 10px;">
-                    <button id="exportDrawing" style="
-                        padding: 12px 30px;
-                        border: none;
+                <div style="
+                    background: rgba(255,255,255,0.03);
+                    padding: 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                    border: 1px solid rgba(255,255,255,0.05);
+                ">
+                    <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Tu Versión</h3>
+                    <img src="${userDrawing}" style="
+                        width: 100%;
                         border-radius: 8px;
-                        background: #3498db;
-                        color: white;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        font-size: 16px;
-                        font-weight: 500;
-                        letter-spacing: 1px;
-                        &:hover {
-                            background: #2980b9;
-                        }
-                    ">Exportar Dibujo</button>
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    ">
                 </div>
             </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div style="
+                    background: rgba(255,255,255,0.03);
+                    padding: 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                    border: 1px solid rgba(255,255,255,0.05);
+                ">
+                    <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Similitud</h3>
+                    <div style="
+                        font-size: 42px;
+                        text-align: center;
+                        margin: 15px 0;
+                        color: ${this.getSimilarityColor(similarityScore)};
+                        font-weight: 300;
+                    ">
+                        ${similarityScore}%
+                    </div>
+                    <div style="
+                        text-align: center;
+                        color: #95a5a6;
+                        font-size: 14px;
+                        margin-top: 5px;
+                        font-weight: 300;
+                    ">
+                        ${this.getSimilarityMessage(similarityScore)}
+                    </div>
+                </div>
+
+                <div style="
+                    background: rgba(255,255,255,0.03);
+                    padding: 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                    border: 1px solid rgba(255,255,255,0.05);
+                ">
+                    <h3 style="margin: 0 0 15px 0; color: #3498db; font-size: 18px; font-weight: 500;">Puntos de Control</h3>
+                    <div style="
+                        font-size: 42px;
+                        text-align: center;
+                        margin: 15px 0;
+                        color: ${this.getCheckpointColor(checkpointPercentage)};
+                        font-weight: 300;
+                    ">
+                        ${completedCheckpoints}/${totalCheckpoints}
+                    </div>
+                    <div style="
+                        text-align: center;
+                        color: #95a5a6;
+                        font-size: 14px;
+                        margin-top: 5px;
+                        font-weight: 300;
+                    ">
+                        ${this.getCheckpointMessage(checkpointPercentage)}
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 10px;">
+                <button id="exportDrawing" style="
+                    padding: 12px 30px;
+                    border: none;
+                    border-radius: 8px;
+                    background: #3498db;
+                    color: white;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    font-size: 16px;
+                    font-weight: 500;
+                    letter-spacing: 1px;
+                    &:hover {
+                        background: #2980b9;
+                    }
+                ">Exportar Dibujo</button>
+            </div>
         `;
+
+        // Agregar el contenido al panel
+        analysisPanel.appendChild(contentDiv);
 
         // Agregar el panel al documento
         document.body.appendChild(analysisPanel);
@@ -2013,8 +1871,11 @@ export class GameManager {
             this.exportDrawing();
         });
 
-        document.getElementById('closeAnalysis').addEventListener('click', () => {
-            document.body.removeChild(analysisPanel);
+        // Cerrar al hacer clic fuera del contenido
+        analysisPanel.addEventListener('click', (e) => {
+            if (e.target === analysisPanel) {
+                document.body.removeChild(analysisPanel);
+            }
         });
     }
 
